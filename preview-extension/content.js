@@ -57,6 +57,19 @@ function hasLabel(el, labels) {
   return false;
 }
 
+// Same as the app: when an item above the screen changes height, scroll by the same amount
+// (minus whatever the browser already adjusted) so the screen stays still.
+function setHidden(el, attr, hide) {
+  const y = window.scrollY;
+  const before = el.getBoundingClientRect();
+  if (hide) el.setAttribute(attr, '');
+  else el.removeAttribute(attr);
+  if (before.top >= 0) return;
+  const change = el.getBoundingClientRect().height - before.height;
+  const remaining = change - (window.scrollY - y);
+  if (remaining) window.scrollBy(0, remaining);
+}
+
 // Same as the app: re-check every item each time, since Instagram may reuse elements.
 function hideItems() {
   for (const rule of items) {
@@ -64,8 +77,8 @@ function hideItems() {
     try {
       for (const el of document.querySelectorAll(rule.item)) {
         const match = hasLabel(el, rule.labels) && (!rule.mustContain || el.querySelector(rule.mustContain));
-        if (match && !el.hasAttribute(attr)) el.setAttribute(attr, '');
-        else if (!match && el.hasAttribute(attr)) el.removeAttribute(attr);
+        if (match && !el.hasAttribute(attr)) setHidden(el, attr, true);
+        else if (!match && el.hasAttribute(attr)) setHidden(el, attr, false);
         if (match) {
           for (const video of el.getElementsByTagName('video')) {
             video.muted = true;

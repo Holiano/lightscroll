@@ -127,15 +127,13 @@ function crossCss(selector: string): string {
 ${selector}::before { content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 22px; transform: translate(-50%, -50%); pointer-events: none; background: linear-gradient(currentColor, currentColor) 50% 6px / 16px 2px no-repeat, linear-gradient(currentColor, currentColor) 50% 0 / 2px 22px no-repeat; }`;
 }
 
-// Items hidden by hideItems keep their full size, with their content made invisible and a
-// label in the middle. Instagram's feed reserves space for each post from its media size, so
-// any change in size makes the page jump when the post scrolls back into view.
+// Items hidden by hideItems collapse to zero height but stay on the page (not display: none),
+// so Instagram's feed can still track them. The in-page script keeps the screen in place when an
+// item above it collapses, since Instagram's feed doesn't.
 export const HIDDEN_ITEM_ATTR = 'data-lightscroll-hidden';
 export const REMOVED_ITEM_ATTR = 'data-lightscroll-removed';
 const HIDDEN_ITEM_CSS = `[${REMOVED_ITEM_ATTR}] { display: none !important; }
-[${HIDDEN_ITEM_ATTR}] { position: relative !important; }
-[${HIDDEN_ITEM_ATTR}] > * { visibility: hidden !important; }
-[${HIDDEN_ITEM_ATTR}]::before { content: "Hidden by LightScroll"; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }`;
+[${HIDDEN_ITEM_ATTR}] { height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; }`;
 
 // One CSS rule per selector, so a single broken selector can't disable the rest.
 // Only fixed declarations are ever used: hiding, layering on top, the cross, and hidden items.

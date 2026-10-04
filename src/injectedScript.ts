@@ -94,6 +94,20 @@ export function buildInjectedScript(rules: HideRules): string {
     }
   }
 
+  // Hides or shows an item. If the item starts above the screen, its change in height would move
+  // everything you're looking at, so scroll by the same amount to keep the screen still. The
+  // browser may already have done part of that itself, so only make up the rest.
+  function setHidden(el, attr, hide) {
+    var y = window.scrollY;
+    var before = el.getBoundingClientRect();
+    if (hide) el.setAttribute(attr, '');
+    else el.removeAttribute(attr);
+    if (before.top >= 0) return;
+    var change = el.getBoundingClientRect().height - before.height;
+    var remaining = change - (window.scrollY - y);
+    if (remaining) window.scrollBy(0, remaining);
+  }
+
   // Instagram may reuse a post's element for another post, so re-check every item each time
   // and show it again if it no longer matches. The look of a hidden item comes from the CSS.
   function hideItems() {
@@ -105,8 +119,8 @@ export function buildInjectedScript(rules: HideRules): string {
         for (var j = 0; j < nodes.length; j++) {
           var el = nodes[j];
           var match = hasLabel(el, rule.labels) && (!rule.mustContain || el.querySelector(rule.mustContain));
-          if (match && !el.hasAttribute(attr)) el.setAttribute(attr, '');
-          else if (!match && el.hasAttribute(attr)) el.removeAttribute(attr);
+          if (match && !el.hasAttribute(attr)) setHidden(el, attr, true);
+          else if (!match && el.hasAttribute(attr)) setHidden(el, attr, false);
           if (match) silenceVideos(el);
         }
       } catch (e) {

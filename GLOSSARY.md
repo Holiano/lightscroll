@@ -12,10 +12,6 @@ _Avoid_: Hotbar, nav, tab bar
 The list that says which parts of Instagram to hide or block.
 _Avoid_: Do-not-show list, blocklist, filter list
 
-**Placeholder**:
-The empty, full-size box left where a hidden post used to be.
-_Avoid_: Empty box, bar
-
 **Reels feed**:
 Instagram's endless vertical feed of reels you swipe through. This is what LightScroll removes.
 _Avoid_: Endless scroll, Reels
