@@ -70,6 +70,8 @@ Instagram changes its website sometimes. We use two locks:
      from it. If the GitHub account were ever hacked, nobody's Instagram account could be touched.
    - The list is grouped by feature (`reels`, `exploreGrid`, `openInAppBanners`, and later `suggestedPosts`, `ads`)
      so v2 can add on/off switches easily.
+   - While the repo is private, only the built-in list (`src/hideRules.ts`) is used. The GitHub download is added
+     when the repo goes public.
 2. **Block Reels pages by address.** Any page under `/reels/` is refused. A single reel (`/reel/<id>`) opens as one
    video with no swiping to the next. These addresses change much less often than buttons do.
 

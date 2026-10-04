@@ -4,12 +4,17 @@ import { Linking, StyleSheet, useColorScheme } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import type { ShouldStartLoadRequest, WebViewOpenWindowEvent } from 'react-native-webview/lib/WebViewTypes';
+import { DEFAULT_RULES, isBlockedUrl } from './src/hideRules';
+import { buildInjectedScript } from './src/injectedScript';
 
 const HOME_URL = 'https://www.instagram.com/';
 
 // Appended to the WebView's built-in user agent so Instagram sees the same browser
 // signature as mobile Safari instead of an embedded app browser.
 const SAFARI_SUFFIX = 'Version/18.0 Mobile/15E148 Safari/604.1';
+
+const rules = DEFAULT_RULES;
+const injectedScript = buildInjectedScript(rules);
 
 // Pages on these sites stay inside the app (Facebook is needed for "Log in with Facebook").
 // Everything else opens in Safari.
@@ -39,7 +44,8 @@ export default function App() {
     if (/^instagram:/i.test(url)) return false;
     // Embedded frames are part of the current page.
     if (!isTopFrame) return true;
-    if (isInternal(url)) return true;
+    // Stay on the current page instead of opening Reels.
+    if (isInternal(url)) return !isBlockedUrl(url, rules);
     openInSafari(url);
     return false;
   };
@@ -60,6 +66,7 @@ export default function App() {
           source={{ uri: HOME_URL }}
           style={{ backgroundColor: background }}
           applicationNameForUserAgent={SAFARI_SUFFIX}
+          injectedJavaScriptBeforeContentLoaded={injectedScript}
           allowsInlineMediaPlayback
           allowsBackForwardNavigationGestures
           pullToRefreshEnabled
