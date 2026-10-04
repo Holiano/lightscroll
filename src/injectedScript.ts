@@ -77,6 +77,15 @@ export function buildInjectedScript(rules: HideRules): string {
     return false;
   }
 
+  // A hidden post is only invisible, so Instagram may still autoplay its video. Keep it paused and muted.
+  function silenceVideos(el) {
+    var videos = el.getElementsByTagName('video');
+    for (var k = 0; k < videos.length; k++) {
+      videos[k].muted = true;
+      if (!videos[k].paused) videos[k].pause();
+    }
+  }
+
   // Instagram may reuse a post's element for another post, so re-check every item each time
   // and show it again if it no longer matches. The look of a hidden item comes from the CSS.
   function hideItems() {
@@ -89,6 +98,7 @@ export function buildInjectedScript(rules: HideRules): string {
           var match = hasLabel(el, rule.labels) && (!rule.mustContain || el.querySelector(rule.mustContain));
           if (match && !el.hasAttribute(HIDDEN)) el.setAttribute(HIDDEN, '');
           else if (!match && el.hasAttribute(HIDDEN)) el.removeAttribute(HIDDEN);
+          if (match) silenceVideos(el);
         }
       } catch (e) {
         // A broken selector skips only this rule.
@@ -105,6 +115,16 @@ export function buildInjectedScript(rules: HideRules): string {
     };
   });
   window.addEventListener('popstate', checkPath);
+
+  // Re-check items as soon as Instagram changes the page, before it is drawn, so a post that
+  // scrolls back into view never flashes its content first.
+  if (ITEMS.length && window.MutationObserver) {
+    new MutationObserver(hideItems).observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+  }
 
   ensureStyle();
   checkPath();

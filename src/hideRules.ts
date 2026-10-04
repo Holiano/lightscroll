@@ -40,13 +40,16 @@ export const DEFAULT_RULES: HideRules = {
         'a[href="https://www.instagram.com/reels/"]',
       ],
       blockedPaths: ['/reels/'],
+    },
+    suggestedPosts: {
+      hideSelectors: [],
+      blockedPaths: [],
       hideItems: [
         {
-          // Recommended reels from accounts you don't follow. Each feed post is an <article>; recommended
-          // ones carry this label. Only reels (a video or reel audio), so recommended photos stay until v2.
+          // Recommended posts (reels and photos) from accounts you don't follow. Each feed post is an
+          // <article>; recommended ones carry this label.
           item: 'article',
           labels: ['Suggested for you', 'Forslag til deg'],
-          mustContain: 'video, a[href^="/reels/audio/"]',
         },
       ],
     },
@@ -88,11 +91,13 @@ export function raiseSelectors(rules: HideRules): string[] {
   return Object.values(rules.features).flatMap((f) => f.raiseSelectors ?? []);
 }
 
-// Items hidden by hideItems keep a thin bar instead of disappearing: Instagram's feed tracks
-// post heights, and collapsing posts to nothing makes it jump back to the top.
+// Items hidden by hideItems keep their full size, with their content made invisible and a
+// label in the middle. Instagram's feed reserves space for each post from its media size, so
+// any change in size makes the page jump when the post scrolls back into view.
 export const HIDDEN_ITEM_ATTR = 'data-lightscroll-hidden';
-const HIDDEN_ITEM_CSS = `[${HIDDEN_ITEM_ATTR}] > * { display: none !important; }
-[${HIDDEN_ITEM_ATTR}]::before { content: "Hidden by LightScroll"; display: block; padding: 12px 16px; font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }`;
+const HIDDEN_ITEM_CSS = `[${HIDDEN_ITEM_ATTR}] { position: relative !important; }
+[${HIDDEN_ITEM_ATTR}] > * { visibility: hidden !important; }
+[${HIDDEN_ITEM_ATTR}]::before { content: "Hidden by LightScroll"; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }`;
 
 // One CSS rule per selector, so a single broken selector can't disable the rest.
 // Only fixed declarations are ever used: hiding, layering on top, and the hidden-item bar.

@@ -64,6 +64,12 @@ function hideItems() {
         const match = hasLabel(el, rule.labels) && (!rule.mustContain || el.querySelector(rule.mustContain));
         if (match && !el.hasAttribute('data-lightscroll-hidden')) el.setAttribute('data-lightscroll-hidden', '');
         else if (!match && el.hasAttribute('data-lightscroll-hidden')) el.removeAttribute('data-lightscroll-hidden');
+        if (match) {
+          for (const video of el.getElementsByTagName('video')) {
+            video.muted = true;
+            if (!video.paused) video.pause();
+          }
+        }
       }
     } catch {
       // A broken selector skips only this rule.
@@ -97,8 +103,9 @@ async function tick() {
       css = [
         ...ruleValues(rules, 'hideSelectors').map((s) => `${s} { display: none !important; }`),
         ...ruleValues(rules, 'raiseSelectors').map((s) => `${s} { z-index: 1000 !important; }`),
-        '[data-lightscroll-hidden] > * { display: none !important; }',
-        '[data-lightscroll-hidden]::before { content: "Hidden by LightScroll"; display: block; padding: 12px 16px; font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }',
+        '[data-lightscroll-hidden] { position: relative !important; }',
+        '[data-lightscroll-hidden] > * { visibility: hidden !important; }',
+        '[data-lightscroll-hidden]::before { content: "Hidden by LightScroll"; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }',
       ].join('\n');
       blocked = ruleValues(rules, 'blockedPaths');
       focus = ruleValues(rules, 'focusSelectors');
@@ -117,6 +124,14 @@ async function tick() {
   autoFocus();
   hideItems();
 }
+
+// Same as the app: re-check items as soon as Instagram changes the page, before it is drawn,
+// so a post that scrolls back into view never flashes its content first.
+new MutationObserver(hideItems).observe(document.documentElement, {
+  childList: true,
+  subtree: true,
+  characterData: true,
+});
 
 tick();
 setInterval(tick, 1000);

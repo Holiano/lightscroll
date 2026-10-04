@@ -34,13 +34,13 @@ donations later on. Faith is the reason it exists.
 | Area | Behaviour |
 |---|---|
 | Reels tab/button | **Hidden.** |
-| Suggested reels from strangers (home feed) | **Hidden.** |
+| Suggested posts from strangers, reels and photos (home feed) | **Hidden.** They keep their size as an empty box saying "Hidden by LightScroll" (videos paused and muted), because any change in size makes the feed jump. |
 | Endless swipe-to-next-reel | **Blocked everywhere.** A reel opens as one single video. |
 | Reels from people you follow | **Shown** as normal single posts. |
 | Reels sent in DMs | **Shown** as single videos. |
 | Explore | **Search only.** The search bar stays and the recommended grid is hidden. |
 | "Open in the Instagram app" banners | **Hidden.** |
-| Suggested posts, ads | **Not touched in v1** (planned for v2). |
+| Ads | **Not touched in v1** (planned for v2). |
 
 ### Verse screen
 - Shows **every time the app opens**.
@@ -68,7 +68,7 @@ Instagram changes its website sometimes. We use two locks:
      instantly without waiting for Apple's review.
    - The list is **data only, never code.** The app only *hides* what the list names and never runs anything
      from it. If the GitHub account were ever hacked, nobody's Instagram account could be touched.
-   - The list is grouped by feature (`reels`, `exploreGrid`, `openInAppBanners`, and later `suggestedPosts`, `ads`)
+   - The list is grouped by feature (`reels`, `exploreGrid`, `suggestedPosts`, `openInAppBanners`, and later `ads`)
      so v2 can add on/off switches easily.
    - While the repo is private, only the built-in list (`src/hideRules.ts`) is used. The GitHub download is added
      when the repo goes public.
@@ -135,7 +135,6 @@ Bigger fixes to the app's own logic go out via Expo updates or a new App Store r
 
 ### v2 — More control
 - **Settings with an on/off switch for each feature**: Reels, Explore grid, suggested posts, ads.
-- **Hide suggested posts** so the feed stops at "You're all caught up".
 - **Remove ads.** ⚠️ This is the feature most likely to make Meta complain to Apple. Weigh it carefully before shipping.
 - **"Delete Instagram" slideshow**, based on published research about time spent on short videos (cited, no user tracking).
 - Optional **on-device-only** time counter ("You've spent 12 minutes here this week"). Nothing leaves the phone.
