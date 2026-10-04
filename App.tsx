@@ -67,6 +67,8 @@ export default function App() {
           style={{ backgroundColor: background }}
           applicationNameForUserAgent={SAFARI_SUFFIX}
           injectedJavaScriptBeforeContentLoaded={injectedScript}
+          // Lets Explore open straight into search with the keyboard up.
+          keyboardDisplayRequiresUserAction={false}
           allowsInlineMediaPlayback
           allowsBackForwardNavigationGestures
           pullToRefreshEnabled

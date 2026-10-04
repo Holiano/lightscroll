@@ -7,6 +7,8 @@ export type FeatureRules = {
   hideSelectors: string[];
   // Pages whose path starts with one of these (with a trailing slash) are never shown.
   blockedPaths: string[];
+  // When a page opens, the first element matching one of these gets focus, once per visit.
+  focusSelectors?: string[];
 };
 
 export type HideRules = {
@@ -35,6 +37,8 @@ export const DEFAULT_RULES: HideRules = {
         'main:has(input[type="search"]) [role="progressbar"]',
       ],
       blockedPaths: [],
+      // Open Explore straight into search, which shows recent searches.
+      focusSelectors: ['main input[type="search"]'],
     },
   },
 };
@@ -45,6 +49,10 @@ export function hideSelectors(rules: HideRules): string[] {
 
 export function blockedPaths(rules: HideRules): string[] {
   return Object.values(rules.features).flatMap((f) => f.blockedPaths);
+}
+
+export function focusSelectors(rules: HideRules): string[] {
+  return Object.values(rules.features).flatMap((f) => f.focusSelectors ?? []);
 }
 
 // "/reels" and "/reels/abc" both count as "/reels/".

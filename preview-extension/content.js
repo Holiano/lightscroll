@@ -3,6 +3,9 @@
 let lastText = '';
 let css = '';
 let blocked = [];
+let focus = [];
+let visitPath = null;
+let focusDone = false;
 
 function ruleValues(rules, key) {
   return Object.values(rules.features || {}).flatMap((f) => (Array.isArray(f[key]) ? f[key] : []));
@@ -24,6 +27,23 @@ function checkPath() {
   let path = location.pathname;
   if (!path.endsWith('/')) path += '/';
   if (blocked.some((p) => path.startsWith(p))) location.replace('/');
+}
+
+// Focus once per page visit, so leaving the field doesn't pull focus back.
+function autoFocus() {
+  if (location.pathname !== visitPath) {
+    visitPath = location.pathname;
+    focusDone = false;
+  }
+  if (focusDone) return;
+  for (const selector of focus) {
+    const el = document.querySelector(selector);
+    if (el) {
+      el.focus();
+      focusDone = true;
+      return;
+    }
+  }
 }
 
 function setBadge(text, ok) {
@@ -53,6 +73,7 @@ async function tick() {
         .map((s) => `${s} { display: none !important; }`)
         .join('\n');
       blocked = ruleValues(rules, 'blockedPaths');
+      focus = ruleValues(rules, 'focusSelectors');
       setBadge(`LightScroll v${rules.version} ✓`, true);
     }
   } catch {
@@ -61,6 +82,7 @@ async function tick() {
   }
   ensureStyle();
   checkPath();
+  autoFocus();
 }
 
 tick();
