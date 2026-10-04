@@ -59,11 +59,12 @@ function hasLabel(el, labels) {
 // Same as the app: re-check every item each time, since Instagram may reuse elements.
 function hideItems() {
   for (const rule of items) {
+    const attr = rule.remove ? 'data-lightscroll-removed' : 'data-lightscroll-hidden';
     try {
       for (const el of document.querySelectorAll(rule.item)) {
         const match = hasLabel(el, rule.labels) && (!rule.mustContain || el.querySelector(rule.mustContain));
-        if (match && !el.hasAttribute('data-lightscroll-hidden')) el.setAttribute('data-lightscroll-hidden', '');
-        else if (!match && el.hasAttribute('data-lightscroll-hidden')) el.removeAttribute('data-lightscroll-hidden');
+        if (match && !el.hasAttribute(attr)) el.setAttribute(attr, '');
+        else if (!match && el.hasAttribute(attr)) el.removeAttribute(attr);
         if (match) {
           for (const video of el.getElementsByTagName('video')) {
             video.muted = true;
@@ -103,6 +104,7 @@ async function tick() {
       css = [
         ...ruleValues(rules, 'hideSelectors').map((s) => `${s} { display: none !important; }`),
         ...ruleValues(rules, 'raiseSelectors').map((s) => `${s} { z-index: 1000 !important; }`),
+        '[data-lightscroll-removed] { display: none !important; }',
         '[data-lightscroll-hidden] { position: relative !important; }',
         '[data-lightscroll-hidden] > * { visibility: hidden !important; }',
         '[data-lightscroll-hidden]::before { content: "Hidden by LightScroll"; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }',

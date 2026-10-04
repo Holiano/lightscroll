@@ -1,5 +1,6 @@
 import {
   HIDDEN_ITEM_ATTR,
+  REMOVED_ITEM_ATTR,
   blockedPaths,
   focusSelectors,
   hideSelectors,
@@ -25,6 +26,7 @@ export function buildInjectedScript(rules: HideRules): string {
   var FOCUS = ${JSON.stringify(focusSelectors(rules))};
   var ITEMS = ${JSON.stringify(items)};
   var HIDDEN = ${JSON.stringify(HIDDEN_ITEM_ATTR)};
+  var REMOVED = ${JSON.stringify(REMOVED_ITEM_ATTR)};
 
   function isBlocked(path) {
     if (path.charAt(path.length - 1) !== '/') path += '/';
@@ -91,13 +93,14 @@ export function buildInjectedScript(rules: HideRules): string {
   function hideItems() {
     for (var i = 0; i < ITEMS.length; i++) {
       var rule = ITEMS[i];
+      var attr = rule.remove ? REMOVED : HIDDEN;
       try {
         var nodes = document.querySelectorAll(rule.item);
         for (var j = 0; j < nodes.length; j++) {
           var el = nodes[j];
           var match = hasLabel(el, rule.labels) && (!rule.mustContain || el.querySelector(rule.mustContain));
-          if (match && !el.hasAttribute(HIDDEN)) el.setAttribute(HIDDEN, '');
-          else if (!match && el.hasAttribute(HIDDEN)) el.removeAttribute(HIDDEN);
+          if (match && !el.hasAttribute(attr)) el.setAttribute(attr, '');
+          else if (!match && el.hasAttribute(attr)) el.removeAttribute(attr);
           if (match) silenceVideos(el);
         }
       } catch (e) {

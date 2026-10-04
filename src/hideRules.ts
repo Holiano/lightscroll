@@ -22,6 +22,9 @@ export type ItemRule = {
   labels: string[];
   // Only hide items that also contain an element matching this selector.
   mustContain?: string;
+  // Remove the item completely instead of leaving an empty box. Only for things floating on top of
+  // the page (like banners), since removing feed posts makes the feed jump.
+  remove?: boolean;
 };
 
 export type HideRules = {
@@ -68,6 +71,20 @@ export const DEFAULT_RULES: HideRules = {
       // eight levels above the search button's link (measured in Chrome's iPhone view).
       raiseSelectors: ['div:has(> div > div > div > div > div > div > span > div > a[href="/explore/"])'],
     },
+    openInAppBanners: {
+      hideSelectors: [],
+      blockedPaths: [],
+      hideItems: [
+        {
+          // The floating "Use the app" banner: a box three levels under the page's <section>, with a
+          // button and a close button but no links. Requiring no links keeps the feed and profile
+          // areas (which are full of links) from ever matching.
+          item: 'section > div > div > div:not(:has(a))',
+          labels: ['Use the app', 'Open app', 'Get the app', 'Bruk appen', 'Åpne appen'],
+          remove: true,
+        },
+      ],
+    },
   },
 };
 
@@ -95,7 +112,9 @@ export function raiseSelectors(rules: HideRules): string[] {
 // label in the middle. Instagram's feed reserves space for each post from its media size, so
 // any change in size makes the page jump when the post scrolls back into view.
 export const HIDDEN_ITEM_ATTR = 'data-lightscroll-hidden';
-const HIDDEN_ITEM_CSS = `[${HIDDEN_ITEM_ATTR}] { position: relative !important; }
+export const REMOVED_ITEM_ATTR = 'data-lightscroll-removed';
+const HIDDEN_ITEM_CSS = `[${REMOVED_ITEM_ATTR}] { display: none !important; }
+[${HIDDEN_ITEM_ATTR}] { position: relative !important; }
 [${HIDDEN_ITEM_ATTR}] > * { visibility: hidden !important; }
 [${HIDDEN_ITEM_ATTR}]::before { content: "Hidden by LightScroll"; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }`;
 
