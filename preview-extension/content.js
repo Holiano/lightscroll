@@ -4,6 +4,7 @@ let lastText = '';
 let css = '';
 let blocked = [];
 let focus = [];
+let items = [];
 let visitPath = null;
 let focusDone = false;
 
@@ -46,6 +47,30 @@ function autoFocus() {
   }
 }
 
+function hasLabel(el, labels) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let node;
+  while ((node = walker.nextNode())) {
+    if (labels.includes(node.nodeValue.trim().toLowerCase())) return true;
+  }
+  return false;
+}
+
+// Same as the app: re-check every item each time, since Instagram may reuse elements.
+function hideItems() {
+  for (const rule of items) {
+    try {
+      for (const el of document.querySelectorAll(rule.item)) {
+        const match = hasLabel(el, rule.labels) && (!rule.mustContain || el.querySelector(rule.mustContain));
+        if (match && !el.hasAttribute('data-lightscroll-hidden')) el.setAttribute('data-lightscroll-hidden', '');
+        else if (!match && el.hasAttribute('data-lightscroll-hidden')) el.removeAttribute('data-lightscroll-hidden');
+      }
+    } catch {
+      // A broken selector skips only this rule.
+    }
+  }
+}
+
 function setBadge(text, ok) {
   let badge = document.getElementById('lightscroll-preview-badge');
   if (!badge) {
@@ -68,13 +93,19 @@ async function tick() {
     if (res.text !== lastText) {
       const rules = JSON.parse(res.text);
       lastText = res.text;
-      // Same CSS as the app's rulesCss(): one rule per selector, only hiding and layering on top.
+      // Same CSS as the app's rulesCss(): one rule per selector, plus the hidden-item bar.
       css = [
         ...ruleValues(rules, 'hideSelectors').map((s) => `${s} { display: none !important; }`),
         ...ruleValues(rules, 'raiseSelectors').map((s) => `${s} { z-index: 1000 !important; }`),
+        '[data-lightscroll-hidden] > * { display: none !important; }',
+        '[data-lightscroll-hidden]::before { content: "Hidden by LightScroll"; display: block; padding: 12px 16px; font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }',
       ].join('\n');
       blocked = ruleValues(rules, 'blockedPaths');
       focus = ruleValues(rules, 'focusSelectors');
+      items = ruleValues(rules, 'hideItems').map((r) => ({
+        ...r,
+        labels: (r.labels || []).map((l) => l.trim().toLowerCase()),
+      }));
       setBadge(`LightScroll v${rules.version} ✓`, true);
     }
   } catch {
@@ -84,6 +115,7 @@ async function tick() {
   ensureStyle();
   checkPath();
   autoFocus();
+  hideItems();
 }
 
 tick();

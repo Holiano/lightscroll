@@ -1,10 +1,20 @@
-import { blockedPaths, focusSelectors, hideSelectors, raiseSelectors, rulesCss, type HideRules } from './hideRules';
+import {
+  HIDDEN_ITEM_ATTR,
+  blockedPaths,
+  focusSelectors,
+  hideSelectors,
+  itemRules,
+  raiseSelectors,
+  rulesCss,
+  type HideRules,
+} from './hideRules';
 
 // Builds the script that runs inside every Instagram page. The rules are embedded as JSON
 // data; the script itself is fixed and only ever hides elements, leaves blocked pages, or
 // focuses an element.
 export function buildInjectedScript(rules: HideRules): string {
   const css = rulesCss(hideSelectors(rules), raiseSelectors(rules));
+  const items = itemRules(rules).map((r) => ({ ...r, labels: r.labels.map((l) => l.trim().toLowerCase()) }));
 
   return `(function () {
   if (window.__lightscroll) return;
@@ -13,6 +23,8 @@ export function buildInjectedScript(rules: HideRules): string {
   var CSS = ${JSON.stringify(css)};
   var BLOCKED = ${JSON.stringify(blockedPaths(rules))};
   var FOCUS = ${JSON.stringify(focusSelectors(rules))};
+  var ITEMS = ${JSON.stringify(items)};
+  var HIDDEN = ${JSON.stringify(HIDDEN_ITEM_ATTR)};
 
   function isBlocked(path) {
     if (path.charAt(path.length - 1) !== '/') path += '/';
@@ -56,6 +68,34 @@ export function buildInjectedScript(rules: HideRules): string {
     }
   }
 
+  function hasLabel(el, labels) {
+    var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    var node;
+    while ((node = walker.nextNode())) {
+      if (labels.indexOf(node.nodeValue.trim().toLowerCase()) !== -1) return true;
+    }
+    return false;
+  }
+
+  // Instagram may reuse a post's element for another post, so re-check every item each time
+  // and show it again if it no longer matches. The look of a hidden item comes from the CSS.
+  function hideItems() {
+    for (var i = 0; i < ITEMS.length; i++) {
+      var rule = ITEMS[i];
+      try {
+        var nodes = document.querySelectorAll(rule.item);
+        for (var j = 0; j < nodes.length; j++) {
+          var el = nodes[j];
+          var match = hasLabel(el, rule.labels) && (!rule.mustContain || el.querySelector(rule.mustContain));
+          if (match && !el.hasAttribute(HIDDEN)) el.setAttribute(HIDDEN, '');
+          else if (!match && el.hasAttribute(HIDDEN)) el.removeAttribute(HIDDEN);
+        }
+      } catch (e) {
+        // A broken selector skips only this rule.
+      }
+    }
+  }
+
   ['pushState', 'replaceState'].forEach(function (name) {
     var original = history[name];
     history[name] = function () {
@@ -72,6 +112,7 @@ export function buildInjectedScript(rules: HideRules): string {
     ensureStyle();
     checkPath();
     autoFocus();
+    hideItems();
   }, 500);
 })();
 true;`;
