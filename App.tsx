@@ -7,6 +7,10 @@ import type { ShouldStartLoadRequest, WebViewOpenWindowEvent } from 'react-nativ
 
 const HOME_URL = 'https://www.instagram.com/';
 
+// Appended to the WebView's built-in user agent so Instagram sees the same browser
+// signature as mobile Safari instead of an embedded app browser.
+const SAFARI_SUFFIX = 'Version/18.0 Mobile/15E148 Safari/604.1';
+
 // Pages on these sites stay inside the app (Facebook is needed for "Log in with Facebook").
 // Everything else opens in Safari.
 const INTERNAL_HOSTS = ['instagram.com', 'facebook.com'];
@@ -55,6 +59,7 @@ export default function App() {
           ref={webView}
           source={{ uri: HOME_URL }}
           style={{ backgroundColor: background }}
+          applicationNameForUserAgent={SAFARI_SUFFIX}
           allowsInlineMediaPlayback
           allowsBackForwardNavigationGestures
           pullToRefreshEnabled
