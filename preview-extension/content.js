@@ -68,10 +68,11 @@ async function tick() {
     if (res.text !== lastText) {
       const rules = JSON.parse(res.text);
       lastText = res.text;
-      // One CSS rule per selector, so a single broken selector can't disable the rest.
-      css = ruleValues(rules, 'hideSelectors')
-        .map((s) => `${s} { display: none !important; }`)
-        .join('\n');
+      // Same CSS as the app's rulesCss(): one rule per selector, only hiding and layering on top.
+      css = [
+        ...ruleValues(rules, 'hideSelectors').map((s) => `${s} { display: none !important; }`),
+        ...ruleValues(rules, 'raiseSelectors').map((s) => `${s} { z-index: 1000 !important; }`),
+      ].join('\n');
       blocked = ruleValues(rules, 'blockedPaths');
       focus = ruleValues(rules, 'focusSelectors');
       setBadge(`LightScroll v${rules.version} ✓`, true);

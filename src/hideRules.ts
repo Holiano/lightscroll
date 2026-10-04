@@ -9,6 +9,8 @@ export type FeatureRules = {
   blockedPaths: string[];
   // When a page opens, the first element matching one of these gets focus, once per visit.
   focusSelectors?: string[];
+  // Elements matching these are layered on top (z-index only), to fix Instagram overlaps.
+  raiseSelectors?: string[];
 };
 
 export type HideRules = {
@@ -39,6 +41,9 @@ export const DEFAULT_RULES: HideRules = {
       blockedPaths: [],
       // Open Explore straight into search, which shows recent searches.
       focusSelectors: ['main input[type="search"]'],
+      // Instagram draws the recent-searches list over the bottom bar. The bar is the fixed element
+      // eight levels above the search button's link (measured in Chrome's iPhone view).
+      raiseSelectors: ['div:has(> div > div > div > div > div > div > span > div > a[href="/explore/"])'],
     },
   },
 };
@@ -53,6 +58,19 @@ export function blockedPaths(rules: HideRules): string[] {
 
 export function focusSelectors(rules: HideRules): string[] {
   return Object.values(rules.features).flatMap((f) => f.focusSelectors ?? []);
+}
+
+export function raiseSelectors(rules: HideRules): string[] {
+  return Object.values(rules.features).flatMap((f) => f.raiseSelectors ?? []);
+}
+
+// One CSS rule per selector, so a single broken selector can't disable the rest.
+// Only two fixed declarations are ever used: hiding, and layering on top.
+export function rulesCss(hide: string[], raise: string[]): string {
+  return [
+    ...hide.map((s) => `${s} { display: none !important; }`),
+    ...raise.map((s) => `${s} { z-index: 1000 !important; }`),
+  ].join('\n');
 }
 
 // "/reels" and "/reels/abc" both count as "/reels/".

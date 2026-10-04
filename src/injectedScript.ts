@@ -1,13 +1,10 @@
-import { blockedPaths, focusSelectors, hideSelectors, type HideRules } from './hideRules';
+import { blockedPaths, focusSelectors, hideSelectors, raiseSelectors, rulesCss, type HideRules } from './hideRules';
 
 // Builds the script that runs inside every Instagram page. The rules are embedded as JSON
 // data; the script itself is fixed and only ever hides elements, leaves blocked pages, or
 // focuses an element.
 export function buildInjectedScript(rules: HideRules): string {
-  // One CSS rule per selector, so a single broken selector can't disable the rest.
-  const css = hideSelectors(rules)
-    .map((s) => `${s} { display: none !important; }`)
-    .join('\n');
+  const css = rulesCss(hideSelectors(rules), raiseSelectors(rules));
 
   return `(function () {
   if (window.__lightscroll) return;
