@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "LightScroll preview",
+  "version": "0.1.0",
+  "description": "Developer tool: applies LightScroll's hide rules to instagram.com in Chrome. Needs `npm run preview`.",
+  "host_permissions": ["http://localhost:8787/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.instagram.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
