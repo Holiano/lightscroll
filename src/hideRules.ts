@@ -43,6 +43,10 @@ export const DEFAULT_RULES: HideRules = {
         'a[href="/reels/"]',
         'a[href^="/reels/?"]',
         'a[href="https://www.instagram.com/reels/"]',
+        // The viewer that opens a reel someone sent you is a scroller holding the shared reel first and a
+        // list of recommended reels second. Hide that list (its items have reel audio links), so there is
+        // nothing to swipe on to.
+        'div:has(> div video) > div:nth-child(2):has(> div:nth-child(2) a[href^="/reels/audio/"])',
       ],
       blockedPaths: ['/reels/'],
       // The Reels slot in the bottom bar (slot > span > div > link) shows the cross instead, which keeps
