@@ -1,7 +1,7 @@
 # LightScroll — Plan
 
 > **Instagram without Reels.** A free, open-source iPhone app for Christians that shows Instagram
-> without the endless scroll, and opens with a Bible verse.
+> without the endless scroll. From v1.1 it also opens with a Bible verse.
 
 Internal project name: InstaJesus. Public name: **LightScroll**.
 
@@ -10,8 +10,8 @@ Internal project name: InstaJesus. Public name: **LightScroll**.
 ## The idea in one paragraph
 
 LightScroll loads Instagram's own mobile website inside an app and hides the parts built for endless
-scrolling: Reels and the Explore grid. Every time you open it, you see a short Bible verse while
-Instagram loads behind it. The app is free, collects no data, is open source (MIT), and is funded by
+scrolling: Reels, the Explore grid and recommended posts. From v1.1, every time you open it, you see a short
+Bible verse while Instagram loads behind it. The app is free, collects no data, is open source (MIT), and is funded by
 donations later on. Faith is the reason it exists.
 
 ---
@@ -37,12 +37,13 @@ donations later on. Faith is the reason it exists.
 | Suggested posts from strangers, reels and photos (home feed) | **Hidden.** They keep their size as an empty box saying "Hidden by LightScroll" (videos paused and muted), because any change in size makes the feed jump. |
 | Endless swipe-to-next-reel | **Blocked everywhere.** A reel opens as one single video. |
 | Reels from people you follow | **Shown** as normal single posts. |
-| Reels sent in DMs | **Shown** as single videos. |
-| Explore | **Search only.** The search bar stays and the recommended grid is hidden. |
+| Reels sent in DMs | **Shown** on their own. The recommended reels Instagram lines up after them are hidden, so there's nothing to swipe to. |
+| Explore | **Search only.** The recommended grid is hidden, and Explore opens straight into search (recent searches). |
+| Bottom bar | A **cross** takes the Reels slot, keeping the five icons evenly spaced. Decoration in v1; it opens the verse from v1.1. |
 | "Open in the Instagram app" banners | **Hidden.** |
 | Ads | **Not touched in v1** (planned for v2). |
 
-### Verse screen
+### Verse screen (v1.1)
 - Shows **every time the app opens**.
 - **One verse per day**: the same verse all day, a new one tomorrow.
 - Translation: **World English Bible (WEB)**, which is public domain and needs no permission.
@@ -96,27 +97,28 @@ Bigger fixes to the app's own logic go out via Expo updates or a new App Store r
 ### 0. Accounts (before coding)
 - [ ] Apple Developer Program ($99/year).
 - [ ] **Reserve the name "LightScroll"** in App Store Connect.
-- [ ] Expo account.
-- [ ] GitHub account with two-factor login, and a public repo.
+- [x] Expo account.
+- [x] GitHub repo `Holiano/lightscroll` (private for now). Two-factor login still to be confirmed.
 
 ### 1. Prove the risky parts first (do these before anything else)
-- [ ] Load instagram.com in a WebView on the iPhone and log in.
+- [x] Load instagram.com in a WebView on the iPhone and log in.
 - [ ] Check that login **stays** after closing and reopening the app.
-- [ ] Check that Instagram doesn't block or limit the WebView. If it does, try presenting as mobile Safari.
+- [x] Check that Instagram doesn't block or limit the WebView. (The app presents itself as mobile Safari. One "site not allowed" error turned out to be the phone's own Screen Time limit.)
 - [ ] Test "Log in with Facebook" (it may not work inside a WebView). Note the result.
-- [ ] Find out what the mobile website shows for Reels, Explore and single reels, and whether `/reel/<id>` lets you swipe to more reels.
+- [x] Find out what the mobile website shows for Reels, Explore and single reels.
 
 ### 2. The app
-- [ ] Expo project (TypeScript), iPhone only.
-- [ ] Full-screen WebView of instagram.com, with login kept between sessions.
-- [ ] Links outside Instagram open in Safari.
-- [ ] Hiding: built-in "do not show" list, plus download of the newest list from GitHub (checked to be a plain list, ignored if broken).
-      Hiding keeps working as you move around Instagram, since its pages change without reloading.
-- [ ] Reels page blocking (watch page changes inside Instagram, not only full page loads).
-- [ ] Explore: hide the grid and keep search.
-- [ ] Hide "Open in app" banners.
-- [ ] Verse screen: 365 WEB verses bundled in the app, day-of-year selection, skip after 2s, auto-continue after ~5s,
-      Instagram loading underneath.
+- [x] Expo project (TypeScript), iPhone only.
+- [x] Full-screen WebView of instagram.com.
+- [x] Links outside Instagram open in Safari.
+- [x] Hiding: built-in "do not show" list, applied again as you move around Instagram (its pages change without reloading).
+- [ ] Download of the newest list from GitHub (checked to be a plain list, ignored if broken). Needs the repo to be public.
+- [x] Reels page blocking (watch page changes inside Instagram, not only full page loads).
+- [x] Explore: hide the grid, keep search, open straight into search.
+- [x] Hide recommended posts and the reels lined up after a shared reel.
+- [x] Hide "Open in app" banners.
+- [x] Cross in the Reels slot of the bottom bar.
+- [ ] Check all of the above on the iPhone (built and tested in Chrome's phone view so far).
 
 ### 3. Release
 - [ ] App icon (Christian and light-themed, nothing like Instagram's logo).
@@ -130,7 +132,10 @@ Bigger fixes to the app's own logic go out via Expo updates or a new App Store r
 
 ## Later versions
 
-### v1.1 — Donations
+### v1.1 — Verse screen and donations
+- **Verse screen** (see "Verse screen (v1.1)" above): 365 WEB verses bundled in the app, day-of-year selection, skip after 2s,
+  auto-continue after ~5s, Instagram loading underneath. The cross in the bottom bar opens it (the tap already sends a
+  `lightscroll:showVerse` message to the app; v1.1 adds the app side).
 - "Support this app 🙏" **tip jar** in settings using Apple in-app purchases (for example $1.99 / $4.99 / $9.99). Apple keeps 15%.
 - **GitHub Sponsors** on the repo.
 
