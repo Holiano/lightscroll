@@ -3,13 +3,17 @@
 // Run with `npm run preview`: it restarts whenever src/hideRules.ts changes, and the
 // extension picks up the new rules within a second.
 import { createServer } from 'node:http';
-import { DEFAULT_RULES } from '../src/hideRules';
+import { DEFAULT_RULES, crossSelectors, hideSelectors, raiseSelectors, rulesCss } from '../src/hideRules';
 
 const PORT = 8787;
-const body = JSON.stringify(DEFAULT_RULES);
+// The rules plus the exact CSS the app injects, so the preview never has to copy it.
+const body = JSON.stringify({
+  rules: DEFAULT_RULES,
+  css: rulesCss(hideSelectors(DEFAULT_RULES), raiseSelectors(DEFAULT_RULES), crossSelectors(DEFAULT_RULES)),
+});
 
 createServer((req, res) => {
-  if (req.url !== '/rules.json') {
+  if (req.url !== '/preview.json') {
     res.writeHead(404).end();
     return;
   }
@@ -20,5 +24,5 @@ createServer((req, res) => {
   });
   res.end(body);
 }).listen(PORT, '127.0.0.1', () => {
-  console.log(`LightScroll preview: serving rules v${DEFAULT_RULES.version} on http://localhost:${PORT}/rules.json`);
+  console.log(`LightScroll preview: serving rules on http://localhost:${PORT}/preview.json`);
 });

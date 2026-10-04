@@ -13,6 +13,8 @@ export type FeatureRules = {
   raiseSelectors?: string[];
   // Whole items (e.g. feed posts) hidden when they show one of the labels.
   hideItems?: ItemRule[];
+  // Elements that show the LightScroll cross. Tapping one opens today's verse.
+  crossSelectors?: string[];
 };
 
 export type ItemRule = {
@@ -43,6 +45,9 @@ export const DEFAULT_RULES: HideRules = {
         'a[href="https://www.instagram.com/reels/"]',
       ],
       blockedPaths: ['/reels/'],
+      // The Reels slot in the bottom bar (slot > span > div > link) shows the cross instead, which keeps
+      // the five icons evenly spaced.
+      crossSelectors: ['div:has(> span > div > a[href="/reels/"])'],
     },
     suggestedPosts: {
       hideSelectors: [],
@@ -108,6 +113,16 @@ export function raiseSelectors(rules: HideRules): string[] {
   return Object.values(rules.features).flatMap((f) => f.raiseSelectors ?? []);
 }
 
+export function crossSelectors(rules: HideRules): string[] {
+  return Object.values(rules.features).flatMap((f) => f.crossSelectors ?? []);
+}
+
+// The cross: two bars in the text colour, drawn with the same 2px stroke as Instagram's icons.
+function crossCss(selector: string): string {
+  return `${selector} { position: relative !important; min-height: 48px !important; cursor: pointer; }
+${selector}::before { content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 22px; transform: translate(-50%, -50%); pointer-events: none; background: linear-gradient(currentColor, currentColor) 50% 6px / 16px 2px no-repeat, linear-gradient(currentColor, currentColor) 50% 0 / 2px 22px no-repeat; }`;
+}
+
 // Items hidden by hideItems keep their full size, with their content made invisible and a
 // label in the middle. Instagram's feed reserves space for each post from its media size, so
 // any change in size makes the page jump when the post scrolls back into view.
@@ -119,11 +134,12 @@ const HIDDEN_ITEM_CSS = `[${REMOVED_ITEM_ATTR}] { display: none !important; }
 [${HIDDEN_ITEM_ATTR}]::before { content: "Hidden by LightScroll"; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }`;
 
 // One CSS rule per selector, so a single broken selector can't disable the rest.
-// Only fixed declarations are ever used: hiding, layering on top, and the hidden-item bar.
-export function rulesCss(hide: string[], raise: string[]): string {
+// Only fixed declarations are ever used: hiding, layering on top, the cross, and hidden items.
+export function rulesCss(hide: string[], raise: string[], cross: string[]): string {
   return [
     ...hide.map((s) => `${s} { display: none !important; }`),
     ...raise.map((s) => `${s} { z-index: 1000 !important; }`),
+    ...cross.map(crossCss),
     HIDDEN_ITEM_CSS,
   ].join('\n');
 }

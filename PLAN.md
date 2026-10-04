@@ -48,6 +48,7 @@ donations later on. Faith is the reason it exists.
 - Translation: **World English Bible (WEB)**, which is public domain and needs no permission.
 - A **Skip** button appears after **2 seconds**. The app moves on to Instagram by itself after **~5 seconds**.
 - Instagram **loads behind the verse**, so it adds no waiting time.
+- A **cross in the bottom bar**, in the slot where Reels was, opens today's verse again. It also keeps the five icons evenly spaced.
 
 ### Other defaults
 - Users log in on **Instagram's real login page** and stay logged in.

@@ -5,6 +5,7 @@ let css = '';
 let blocked = [];
 let focus = [];
 let items = [];
+let cross = [];
 let visitPath = null;
 let focusDone = false;
 
@@ -98,18 +99,11 @@ async function tick() {
     const res = await chrome.runtime.sendMessage('lightscroll-rules');
     if (!res || res.error) throw new Error('offline');
     if (res.text !== lastText) {
-      const rules = JSON.parse(res.text);
+      const { rules, css: appCss } = JSON.parse(res.text);
       lastText = res.text;
-      // Same CSS as the app's rulesCss(): one rule per selector, plus the hidden-item bar.
-      css = [
-        ...ruleValues(rules, 'hideSelectors').map((s) => `${s} { display: none !important; }`),
-        ...ruleValues(rules, 'raiseSelectors').map((s) => `${s} { z-index: 1000 !important; }`),
-        '[data-lightscroll-removed] { display: none !important; }',
-        '[data-lightscroll-hidden] { position: relative !important; }',
-        '[data-lightscroll-hidden] > * { visibility: hidden !important; }',
-        '[data-lightscroll-hidden]::before { content: "Hidden by LightScroll"; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); font: 13px system-ui, sans-serif; color: #8e8e8e; text-align: center; }',
-      ].join('\n');
+      css = appCss; // Built by the app's rulesCss(), so it always matches the app.
       blocked = ruleValues(rules, 'blockedPaths');
+      cross = ruleValues(rules, 'crossSelectors');
       focus = ruleValues(rules, 'focusSelectors');
       items = ruleValues(rules, 'hideItems').map((r) => ({
         ...r,
@@ -126,6 +120,28 @@ async function tick() {
   autoFocus();
   hideItems();
 }
+
+// Same as the app: tapping the cross never reaches Instagram. (The app then shows today's verse.)
+document.addEventListener(
+  'click',
+  (event) => {
+    const target = event.target;
+    if (!target || !target.closest) return;
+    for (const selector of cross) {
+      try {
+        if (target.closest(selector)) {
+          event.preventDefault();
+          event.stopPropagation();
+          console.log('LightScroll: cross tapped (the app will show today\'s verse here)');
+          return;
+        }
+      } catch {
+        // A broken selector skips only this rule.
+      }
+    }
+  },
+  true,
+);
 
 // Same as the app: re-check items as soon as Instagram changes the page, before it is drawn,
 // so a post that scrolls back into view never flashes its content first.
