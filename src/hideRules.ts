@@ -26,6 +26,16 @@ export const DEFAULT_RULES: HideRules = {
       ],
       blockedPaths: ['/reels/'],
     },
+    exploreGrid: {
+      hideSelectors: [
+        // Explore is the only page whose `main` holds a search box. There, hide the grid tiles (links to
+        // posts) and the loading spinner that fetches more. Search results link to profiles, so they stay.
+        'main:has(input[type="search"]) a[href^="/p/"]',
+        'main:has(input[type="search"]) a[href^="/reel/"]',
+        'main:has(input[type="search"]) [role="progressbar"]',
+      ],
+      blockedPaths: [],
+    },
   },
 };
 
