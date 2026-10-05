@@ -3,13 +3,13 @@
 // Run with `npm run preview`: it restarts whenever src/hideRules.ts changes, and the
 // extension picks up the new rules within a second.
 import { createServer } from 'node:http';
-import { DEFAULT_RULES, crossSelectors, hideSelectors, raiseSelectors, rulesCss } from '../src/hideRules';
+import { DEFAULT_RULES, rulesCss } from '../src/hideRules';
 
 const PORT = 8787;
 // The rules plus the exact CSS the app injects, so the preview never has to copy it.
 const body = JSON.stringify({
   rules: DEFAULT_RULES,
-  css: rulesCss(hideSelectors(DEFAULT_RULES), raiseSelectors(DEFAULT_RULES), crossSelectors(DEFAULT_RULES)),
+  css: rulesCss(DEFAULT_RULES),
 });
 
 createServer((req, res) => {

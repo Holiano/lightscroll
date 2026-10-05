@@ -2,11 +2,8 @@ import {
   HIDDEN_ITEM_ATTR,
   REMOVED_ITEM_ATTR,
   blockedPaths,
-  crossSelectors,
   focusSelectors,
-  hideSelectors,
   itemRules,
-  raiseSelectors,
   rulesCss,
   type HideRules,
 } from './hideRules';
@@ -14,11 +11,9 @@ import {
 // Builds the script that runs inside every Instagram page. The rules are embedded as JSON
 // data; the script itself is fixed and only ever hides elements, leaves blocked pages, or
 // focuses an element.
-// Message the page sends to the app when the cross is tapped.
-export const SHOW_VERSE_MESSAGE = 'lightscroll:showVerse';
 
 export function buildInjectedScript(rules: HideRules): string {
-  const css = rulesCss(hideSelectors(rules), raiseSelectors(rules), crossSelectors(rules));
+  const css = rulesCss(rules);
   const items = itemRules(rules).map((r) => ({ ...r, labels: r.labels.map((l) => l.trim().toLowerCase()) }));
 
   return `(function () {
@@ -31,8 +26,6 @@ export function buildInjectedScript(rules: HideRules): string {
   var ITEMS = ${JSON.stringify(items)};
   var HIDDEN = ${JSON.stringify(HIDDEN_ITEM_ATTR)};
   var REMOVED = ${JSON.stringify(REMOVED_ITEM_ATTR)};
-  var CROSS = ${JSON.stringify(crossSelectors(rules))};
-  var SHOW_VERSE = ${JSON.stringify(SHOW_VERSE_MESSAGE)};
 
   function isBlocked(path) {
     if (path.charAt(path.length - 1) !== '/') path += '/';
@@ -128,28 +121,6 @@ export function buildInjectedScript(rules: HideRules): string {
       }
     }
   }
-
-  // Tapping the cross asks the app to show today's verse, and never reaches Instagram.
-  document.addEventListener(
-    'click',
-    function (event) {
-      var target = event.target;
-      if (!target || !target.closest) return;
-      for (var i = 0; i < CROSS.length; i++) {
-        try {
-          if (target.closest(CROSS[i])) {
-            event.preventDefault();
-            event.stopPropagation();
-            if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(SHOW_VERSE);
-            return;
-          }
-        } catch (e) {
-          // A broken selector skips only this rule.
-        }
-      }
-    },
-    true
-  );
 
   ['pushState', 'replaceState'].forEach(function (name) {
     var original = history[name];

@@ -13,8 +13,8 @@ export type FeatureRules = {
   raiseSelectors?: string[];
   // Whole items (e.g. feed posts) hidden when they show one of the labels.
   hideItems?: ItemRule[];
-  // Elements that show the LightScroll cross. Tapping one opens today's verse.
-  crossSelectors?: string[];
+  // Bottom-bar slots that become the Church button: the icon is centred and gets a cross on its roof.
+  churchSelectors?: string[];
 };
 
 export type ItemRule = {
@@ -47,11 +47,18 @@ export const DEFAULT_RULES: HideRules = {
         // list of recommended reels second. Hide that list (its items have reel audio links), so there is
         // nothing to swipe on to.
         'div:has(> div video) > div:nth-child(2):has(> div:nth-child(2) a[href^="/reels/audio/"])',
+        // The Reels tab's whole slot in the bottom bar (slot > span > div > link). The bar then shares
+        // its width evenly between the four slots left.
+        'div:has(> span > div > a[href="/reels/"])',
       ],
       blockedPaths: ['/reels/'],
-      // The Reels slot in the bottom bar (slot > span > div > link) shows the cross instead, which keeps
-      // the five icons evenly spaced.
-      crossSelectors: ['div:has(> span > div > a[href="/reels/"])'],
+    },
+    churchButton: {
+      hideSelectors: [],
+      blockedPaths: [],
+      // Instagram's Home slot in the bottom bar (slot > span > div > link), not other links to the home
+      // page.
+      churchSelectors: ['div:has(> span > div > a[href="/"])'],
     },
     suggestedPosts: {
       hideSelectors: [],
@@ -117,14 +124,28 @@ export function raiseSelectors(rules: HideRules): string[] {
   return Object.values(rules.features).flatMap((f) => f.raiseSelectors ?? []);
 }
 
-export function crossSelectors(rules: HideRules): string[] {
-  return Object.values(rules.features).flatMap((f) => f.crossSelectors ?? []);
+export function churchSelectors(rules: HideRules): string[] {
+  return Object.values(rules.features).flatMap((f) => f.churchSelectors ?? []);
 }
 
-// The cross: two bars in the text colour, drawn with the same 2px stroke as Instagram's icons.
-function crossCss(selector: string): string {
-  return `${selector} { position: relative !important; min-height: 48px !important; cursor: pointer; }
-${selector}::before { content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 22px; transform: translate(-50%, -50%); pointer-events: none; background: linear-gradient(currentColor, currentColor) 50% 6px / 16px 2px no-repeat, linear-gradient(currentColor, currentColor) 50% 0 / 2px 22px no-repeat; }`;
+// The cross on the Church button's roof, in the house icon's own coordinates (24 wide, y = 0 at the
+// icon's top) and with its 2px rounded lines. The roof peak is at x 12, y 1 and its line is 2px thick,
+// so the upright ends inside that line and the two blend into one shape. Only its shape is used.
+const CROSS_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -8 24 11' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'>" +
+  "<path d='M12 -6V1.5M9.5 -3.5h5'/>" +
+  '</svg>';
+
+// Instagram puts the Home icon at the left of its slot, so centre it like the other icons. The cross
+// is drawn over the icon's own 24px box (the element holding the house) in Instagram's icon colour,
+// which also follows dark mode. Instagram fills the house in when you're on your feed; the cross
+// stays the same either way.
+function churchCss(selector: string): string {
+  const icon = `${selector} div:has(> svg)`;
+  const mask = `url("data:image/svg+xml,${encodeURIComponent(CROSS_SVG)}") 0 0 / 100% 100% no-repeat`;
+  return `${selector} { justify-content: center !important; }
+${icon} { position: relative !important; }
+${icon}::after { content: ""; position: absolute; left: 0; top: -8px; width: 24px; height: 11px; pointer-events: none; background-color: rgb(var(--ig-primary-text)); -webkit-mask: ${mask}; mask: ${mask}; }`;
 }
 
 // Items hidden by hideItems collapse to zero height but stay on the page (not display: none),
@@ -136,12 +157,12 @@ const HIDDEN_ITEM_CSS = `[${REMOVED_ITEM_ATTR}] { display: none !important; }
 [${HIDDEN_ITEM_ATTR}] { height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; }`;
 
 // One CSS rule per selector, so a single broken selector can't disable the rest.
-// Only fixed declarations are ever used: hiding, layering on top, the cross, and hidden items.
-export function rulesCss(hide: string[], raise: string[], cross: string[]): string {
+// Only fixed declarations are ever used: hiding, layering on top, the Church button, and hidden items.
+export function rulesCss(rules: HideRules): string {
   return [
-    ...hide.map((s) => `${s} { display: none !important; }`),
-    ...raise.map((s) => `${s} { z-index: 1000 !important; }`),
-    ...cross.map(crossCss),
+    ...hideSelectors(rules).map((s) => `${s} { display: none !important; }`),
+    ...raiseSelectors(rules).map((s) => `${s} { z-index: 1000 !important; }`),
+    ...churchSelectors(rules).map(churchCss),
     HIDDEN_ITEM_CSS,
   ].join('\n');
 }

@@ -39,7 +39,7 @@ donations later on. Faith is the reason it exists.
 | Reels from people you follow | **Shown** as normal single posts. |
 | Reels sent in DMs | **Shown** on their own. The recommended reels Instagram lines up after them are hidden, so there's nothing to swipe to. |
 | Explore | **Search only.** The recommended grid is hidden, and Explore opens straight into search (recent searches). |
-| Bottom bar | A **cross** takes the Reels slot, keeping the five icons evenly spaced. Decoration in v1; it opens the verse from v1.1. |
+| Bottom bar | **Four icons**, evenly spaced: the Reels slot is removed. The Home button gets a small cross on its roof, making it the **Church button**. It still works as Home. |
 | "Open in the Instagram app" banners | **Hidden.** |
 | Ads | **Not touched in v1** (planned for v2). |
 
@@ -49,7 +49,7 @@ donations later on. Faith is the reason it exists.
 - Translation: **World English Bible (WEB)**, which is public domain and needs no permission.
 - A **Skip** button appears after **2 seconds**. The app moves on to Instagram by itself after **~5 seconds**.
 - Instagram **loads behind the verse**, so it adds no waiting time.
-- A **cross in the bottom bar**, in the slot where Reels was, opens today's verse again. It also keeps the five icons evenly spaced.
+- There's **no button to bring the verse back** later. The Church button stays a plain Home button, since it's tapped all the time.
 
 ### Other defaults
 - Users log in on **Instagram's real login page** and stay logged in.
@@ -117,7 +117,7 @@ Bigger fixes to the app's own logic go out via Expo updates or a new App Store r
 - [x] Explore: hide the grid, keep search, open straight into search.
 - [x] Hide recommended posts and the reels lined up after a shared reel.
 - [x] Hide "Open in app" banners.
-- [x] Cross in the Reels slot of the bottom bar.
+- [x] Church button: a cross on the Home button, Reels slot removed, four icons evenly spaced.
 - [ ] Check all of the above on the iPhone (built and tested in Chrome's phone view so far).
 
 ### 3. Release
@@ -134,8 +134,7 @@ Bigger fixes to the app's own logic go out via Expo updates or a new App Store r
 
 ### v1.1 — Verse screen and donations
 - **Verse screen** (see "Verse screen (v1.1)" above): 365 WEB verses bundled in the app, day-of-year selection, skip after 2s,
-  auto-continue after ~5s, Instagram loading underneath. The cross in the bottom bar opens it (the tap already sends a
-  `lightscroll:showVerse` message to the app; v1.1 adds the app side).
+  auto-continue after ~5s, Instagram loading underneath.
 - "Support this app 🙏" **tip jar** in settings using Apple in-app purchases (for example $1.99 / $4.99 / $9.99). Apple keeps 15%.
 - **GitHub Sponsors** on the repo.
 

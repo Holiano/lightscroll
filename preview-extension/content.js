@@ -5,7 +5,6 @@ let css = '';
 let blocked = [];
 let focus = [];
 let items = [];
-let cross = [];
 let visitPath = null;
 let focusDone = false;
 
@@ -116,7 +115,6 @@ async function tick() {
       lastText = res.text;
       css = appCss; // Built by the app's rulesCss(), so it always matches the app.
       blocked = ruleValues(rules, 'blockedPaths');
-      cross = ruleValues(rules, 'crossSelectors');
       focus = ruleValues(rules, 'focusSelectors');
       items = ruleValues(rules, 'hideItems').map((r) => ({
         ...r,
@@ -133,28 +131,6 @@ async function tick() {
   autoFocus();
   hideItems();
 }
-
-// Same as the app: tapping the cross never reaches Instagram. (The app then shows today's verse.)
-document.addEventListener(
-  'click',
-  (event) => {
-    const target = event.target;
-    if (!target || !target.closest) return;
-    for (const selector of cross) {
-      try {
-        if (target.closest(selector)) {
-          event.preventDefault();
-          event.stopPropagation();
-          console.log('LightScroll: cross tapped (the app will show today\'s verse here)');
-          return;
-        }
-      } catch {
-        // A broken selector skips only this rule.
-      }
-    }
-  },
-  true,
-);
 
 // Same as the app: re-check items as soon as Instagram changes the page, before it is drawn,
 // so a post that scrolls back into view never flashes its content first.
