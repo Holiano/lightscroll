@@ -31,3 +31,7 @@ _Avoid_: Shared video, DM reel
 **Suggested post**:
 A post in your feed from an account you don't follow, picked by Instagram and labelled "Suggested for you".
 _Avoid_: Recommended post
+
+**Top bar**:
+The row along the top of the feed: the + button, the Instagram logo and the heart.
+_Avoid_: Header, nav

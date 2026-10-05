@@ -15,6 +15,9 @@ export type FeatureRules = {
   hideItems?: ItemRule[];
   // Bottom-bar slots that become the Church button: the icon is centred and gets a cross on its roof.
   churchSelectors?: string[];
+  // Top-bar buttons moved to the bar's left end (16px from the edge to the icon) or its centre.
+  placeLeftSelectors?: string[];
+  placeCenterSelectors?: string[];
 };
 
 export type ItemRule = {
@@ -52,6 +55,19 @@ export const DEFAULT_RULES: HideRules = {
         'div:has(> span > div > a[href="/reels/"])',
       ],
       blockedPaths: ['/reels/'],
+    },
+    topBar: {
+      hideSelectors: [],
+      blockedPaths: [],
+      // The feed's top bar, laid out like the Instagram app: + on the left, the logo in the middle and
+      // the heart on the right (where it already is). Only the bar that holds the Instagram logo.
+      // The + button's box (the right group's item without the notifications link) starts 8px left of
+      // its icon.
+      placeLeftSelectors: [
+        'header:has(svg[aria-label="Instagram"]) h1 + div > div:not(:has(a[href="/notifications/"]))',
+      ],
+      // The logo's button, so the h1 around it keeps its place and the heart stays on the right.
+      placeCenterSelectors: ['header:has(svg[aria-label="Instagram"]) h1 [role="button"]'],
     },
     churchButton: {
       hideSelectors: [],
@@ -128,6 +144,24 @@ export function churchSelectors(rules: HideRules): string[] {
   return Object.values(rules.features).flatMap((f) => f.churchSelectors ?? []);
 }
 
+export function placeLeftSelectors(rules: HideRules): string[] {
+  return Object.values(rules.features).flatMap((f) => f.placeLeftSelectors ?? []);
+}
+
+export function placeCenterSelectors(rules: HideRules): string[] {
+  return Object.values(rules.features).flatMap((f) => f.placeCenterSelectors ?? []);
+}
+
+// Moved elements are taken out of the bar's row and placed in the top bar itself (the nearest
+// positioned box), vertically centred.
+function placeLeftCss(selector: string): string {
+  return `${selector} { position: absolute !important; left: 8px !important; top: 50% !important; transform: translateY(-50%) !important; }`;
+}
+
+function placeCenterCss(selector: string): string {
+  return `${selector} { position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; }`;
+}
+
 // The cross on the Church button's roof, in the house icon's own coordinates (24 wide, y = 0 at the
 // icon's top) and with its 2px rounded lines. The roof peak is at x 12, y 1 and its line is 2px thick,
 // so the upright ends inside that line and the two blend into one shape. Only its shape is used.
@@ -157,12 +191,15 @@ const HIDDEN_ITEM_CSS = `[${REMOVED_ITEM_ATTR}] { display: none !important; }
 [${HIDDEN_ITEM_ATTR}] { height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; }`;
 
 // One CSS rule per selector, so a single broken selector can't disable the rest.
-// Only fixed declarations are ever used: hiding, layering on top, the Church button, and hidden items.
+// Only fixed declarations are ever used: hiding, layering on top, the Church button, moving top-bar
+// buttons, and hidden items.
 export function rulesCss(rules: HideRules): string {
   return [
     ...hideSelectors(rules).map((s) => `${s} { display: none !important; }`),
     ...raiseSelectors(rules).map((s) => `${s} { z-index: 1000 !important; }`),
     ...churchSelectors(rules).map(churchCss),
+    ...placeLeftSelectors(rules).map(placeLeftCss),
+    ...placeCenterSelectors(rules).map(placeCenterCss),
     HIDDEN_ITEM_CSS,
   ].join('\n');
 }

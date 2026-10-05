@@ -40,6 +40,7 @@ donations later on. Faith is the reason it exists.
 | Reels sent in DMs | **Shown** on their own. The recommended reels Instagram lines up after them are hidden, so there's nothing to swipe to. |
 | Explore | **Search only.** The recommended grid is hidden, and Explore opens straight into search (recent searches). |
 | Bottom bar | **Four icons**, evenly spaced: the Reels slot is removed. The Home button gets a small cross on its roof, making it the **Church button**. It still works as Home. |
+| Top bar | Laid out **like the Instagram app**: the + button on the left, the logo in the middle, the heart on the right. |
 | "Open in the Instagram app" banners | **Hidden.** |
 | Ads | **Not touched in v1** (planned for v2). |
 
@@ -121,6 +122,7 @@ Bigger fixes to the app's own logic go out via Expo updates or a new App Store r
 - [x] Hide recommended posts and the reels lined up after a shared reel.
 - [x] Hide "Open in app" banners.
 - [x] Church button: a cross on the Home button, Reels slot removed, four icons evenly spaced.
+- [x] Top bar laid out like the app.
 - [ ] Pinch to zoom that snaps back.
 - [ ] Check all of the above on the iPhone (built and tested in Chrome's phone view so far).
 
