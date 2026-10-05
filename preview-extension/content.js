@@ -132,6 +132,63 @@ async function tick() {
   hideItems();
 }
 
+// Same as the app: two fingers zoom the page's content (up to 6×, MAX_ZOOM in the app) and move it
+// around, and it slides back as soon as a finger lifts.
+let pinch = null;
+const distance = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+const midpoint = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+
+window.addEventListener(
+  'touchstart',
+  (event) => {
+    if (event.touches.length !== 2) return;
+    const el = document.querySelector('main') || document.body;
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.transform = '';
+    const [a, b] = event.touches;
+    pinch = { el, rect: el.getBoundingClientRect(), start: distance(a, b), from: midpoint(a, b) };
+    event.stopPropagation();
+  },
+  { capture: true, passive: true },
+);
+
+window.addEventListener(
+  'touchmove',
+  (event) => {
+    if (!pinch || event.touches.length !== 2) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const [a, b] = event.touches;
+    const scale = Math.min(6, Math.max(1, distance(a, b) / pinch.start));
+    const to = midpoint(a, b);
+    const r = pinch.rect;
+    const x = to.x - r.left - scale * (pinch.from.x - r.left);
+    const y = to.y - r.top - scale * (pinch.from.y - r.top);
+    pinch.el.style.transformOrigin = '0 0';
+    pinch.el.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+  },
+  { capture: true, passive: false },
+);
+
+function endPinch(event) {
+  if (!pinch || event.touches.length >= 2) return;
+  const { el } = pinch;
+  pinch = null;
+  const clear = (e) => {
+    if (e && e.target !== el) return;
+    el.removeEventListener('transitionend', clear);
+    el.style.transition = '';
+    el.style.transformOrigin = '';
+  };
+  if (!el.style.transform) return clear();
+  el.addEventListener('transitionend', clear);
+  el.style.transition = 'transform 0.25s ease-out';
+  el.style.transform = '';
+}
+window.addEventListener('touchend', endPinch, true);
+window.addEventListener('touchcancel', endPinch, true);
+
 // Same as the app: re-check items as soon as Instagram changes the page, before it is drawn,
 // so a post that scrolls back into view never flashes its content first.
 new MutationObserver(hideItems).observe(document.documentElement, {

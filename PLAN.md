@@ -55,6 +55,9 @@ donations later on. Faith is the reason it exists.
 - Users log in on **Instagram's real login page** and stay logged in.
 - Posting works the way Instagram's website allows. The app asks for photo and camera access only when needed.
 - Links that leave Instagram (for example "link in bio") open in **Safari**.
+- **Pinch to zoom**, which Instagram's website turns off. Two fingers zoom the page up to **6×** and move it
+  around; it **snaps back** when you let go, like the Instagram app. Pinch only: double-tap still likes a post.
+  If it doesn't feel smooth on the iPhone, v1 ships without it and a native version is considered for v1.1.
 - **No notifications, by design.** This is stated clearly in the App Store description.
 - iPhone only (no special iPad layout), all countries, age rating **13+**.
 
@@ -118,6 +121,7 @@ Bigger fixes to the app's own logic go out via Expo updates or a new App Store r
 - [x] Hide recommended posts and the reels lined up after a shared reel.
 - [x] Hide "Open in app" banners.
 - [x] Church button: a cross on the Home button, Reels slot removed, four icons evenly spaced.
+- [ ] Pinch to zoom that snaps back.
 - [ ] Check all of the above on the iPhone (built and tested in Chrome's phone view so far).
 
 ### 3. Release

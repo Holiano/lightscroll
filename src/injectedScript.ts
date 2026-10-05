@@ -10,7 +10,9 @@ import {
 
 // Builds the script that runs inside every Instagram page. The rules are embedded as JSON
 // data; the script itself is fixed and only ever hides elements, leaves blocked pages, or
-// focuses an element.
+// focuses an element. It also adds pinch to zoom, which Instagram's website turns off.
+// How far pinch to zoom goes.
+export const MAX_ZOOM = 6;
 
 export function buildInjectedScript(rules: HideRules): string {
   const css = rulesCss(rules);
@@ -26,6 +28,7 @@ export function buildInjectedScript(rules: HideRules): string {
   var ITEMS = ${JSON.stringify(items)};
   var HIDDEN = ${JSON.stringify(HIDDEN_ITEM_ATTR)};
   var REMOVED = ${JSON.stringify(REMOVED_ITEM_ATTR)};
+  var MAX_ZOOM = ${MAX_ZOOM};
 
   function isBlocked(path) {
     if (path.charAt(path.length - 1) !== '/') path += '/';
@@ -121,6 +124,69 @@ export function buildInjectedScript(rules: HideRules): string {
       }
     }
   }
+
+  // Pinch to zoom: two fingers zoom the page (up to MAX_ZOOM) and move it around, and it slides
+  // back to normal as soon as a finger lifts. Safari's own zoom stays off, so double-tap still likes.
+  var pinch = null;
+  function distance(a, b) {
+    var dx = a.clientX - b.clientX;
+    var dy = a.clientY - b.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  function midpoint(a, b) {
+    return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+  }
+  // Zoom the page's content; the top and bottom bars stay where they are.
+  function startPinch(event) {
+    if (event.touches.length !== 2) return;
+    var el = document.querySelector('main') || document.body;
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.transform = '';
+    var a = event.touches[0];
+    var b = event.touches[1];
+    pinch = { el: el, rect: el.getBoundingClientRect(), start: distance(a, b), from: midpoint(a, b) };
+    event.stopPropagation();
+  }
+  // Keep the spot first pinched under the fingers, so moving them moves the zoomed page.
+  function movePinch(event) {
+    if (!pinch || event.touches.length !== 2) return;
+    event.preventDefault();
+    event.stopPropagation();
+    var a = event.touches[0];
+    var b = event.touches[1];
+    var scale = Math.min(MAX_ZOOM, Math.max(1, distance(a, b) / pinch.start));
+    var to = midpoint(a, b);
+    var r = pinch.rect;
+    var x = to.x - r.left - scale * (pinch.from.x - r.left);
+    var y = to.y - r.top - scale * (pinch.from.y - r.top);
+    pinch.el.style.transformOrigin = '0 0';
+    pinch.el.style.transform = 'translate(' + x + 'px, ' + y + 'px) scale(' + scale + ')';
+  }
+  function endPinch(event) {
+    if (!pinch || event.touches.length >= 2) return;
+    var el = pinch.el;
+    pinch = null;
+    // Only the slide back itself, not animations inside the page.
+    function clear(e) {
+      if (e && e.target !== el) return;
+      el.removeEventListener('transitionend', clear);
+      el.style.transition = '';
+      el.style.transformOrigin = '';
+    }
+    if (!el.style.transform) return clear();
+    el.addEventListener('transitionend', clear);
+    el.style.transition = 'transform 0.25s ease-out';
+    el.style.transform = '';
+  }
+  window.addEventListener('touchstart', startPinch, { capture: true, passive: true });
+  window.addEventListener('touchmove', movePinch, { capture: true, passive: false });
+  window.addEventListener('touchend', endPinch, true);
+  window.addEventListener('touchcancel', endPinch, true);
+  // Safari's own pinch zoom, in case Instagram's page ever allows it.
+  document.addEventListener('gesturestart', function (event) {
+    event.preventDefault();
+  });
 
   ['pushState', 'replaceState'].forEach(function (name) {
     var original = history[name];
