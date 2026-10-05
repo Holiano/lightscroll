@@ -18,6 +18,9 @@ export type FeatureRules = {
   // Top-bar buttons moved to the bar's left end (16px from the edge to the icon) or its centre.
   placeLeftSelectors?: string[];
   placeCenterSelectors?: string[];
+  // The arrow Instagram centres on the top-right corner of the logo's 28px-tall button, moved down to
+  // sit beside the logo on the right.
+  logoArrowSelectors?: string[];
 };
 
 export type ItemRule = {
@@ -68,6 +71,10 @@ export const DEFAULT_RULES: HideRules = {
       ],
       // The logo's button, so the h1 around it keeps its place and the heart stays on the right.
       placeCenterSelectors: ['header:has(svg[aria-label="Instagram"]) h1 [role="button"]'],
+      // The arrow that appears by the logo while scrolling: the box holding the button's other icon.
+      logoArrowSelectors: [
+        'header:has(svg[aria-label="Instagram"]) h1 [role="button"] div:has(> div > svg:not([aria-label="Instagram"]))',
+      ],
     },
     churchButton: {
       hideSelectors: [],
@@ -152,6 +159,10 @@ export function placeCenterSelectors(rules: HideRules): string[] {
   return Object.values(rules.features).flatMap((f) => f.placeCenterSelectors ?? []);
 }
 
+export function logoArrowSelectors(rules: HideRules): string[] {
+  return Object.values(rules.features).flatMap((f) => f.logoArrowSelectors ?? []);
+}
+
 // Moved elements are taken out of the bar's row and placed in the top bar itself (the nearest
 // positioned box), vertically centred.
 function placeLeftCss(selector: string): string {
@@ -160,6 +171,12 @@ function placeLeftCss(selector: string): string {
 
 function placeCenterCss(selector: string): string {
   return `${selector} { position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; }`;
+}
+
+// Instagram shifts the arrow's 28px box by (-14px, -14px) to centre it on the corner. Shift it by
+// (-4px, 0) instead: 14px down to the logo's middle, and 10px right, leaving a 4px gap.
+function logoArrowCss(selector: string): string {
+  return `${selector} { transform: translate(-4px, 0) !important; }`;
 }
 
 // The cross on the Church button's roof, in the house icon's own coordinates (24 wide, y = 0 at the
@@ -192,7 +209,7 @@ const HIDDEN_ITEM_CSS = `[${REMOVED_ITEM_ATTR}] { display: none !important; }
 
 // One CSS rule per selector, so a single broken selector can't disable the rest.
 // Only fixed declarations are ever used: hiding, layering on top, the Church button, moving top-bar
-// buttons, and hidden items.
+// buttons and the logo's arrow, and hidden items.
 export function rulesCss(rules: HideRules): string {
   return [
     ...hideSelectors(rules).map((s) => `${s} { display: none !important; }`),
@@ -200,6 +217,7 @@ export function rulesCss(rules: HideRules): string {
     ...churchSelectors(rules).map(churchCss),
     ...placeLeftSelectors(rules).map(placeLeftCss),
     ...placeCenterSelectors(rules).map(placeCenterCss),
+    ...logoArrowSelectors(rules).map(logoArrowCss),
     HIDDEN_ITEM_CSS,
   ].join('\n');
 }
