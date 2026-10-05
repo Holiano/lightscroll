@@ -29,7 +29,7 @@ A reel someone sent you in Messages.
 _Avoid_: Shared video, DM reel
 
 **Suggested post**:
-A post in your feed from an account you don't follow, picked by Instagram and labelled "Suggested for you".
+A post in your feed from an account you don't follow, picked by Instagram: either labelled "Suggested for you", or shown under "Suggested posts" once you're caught up.
 _Avoid_: Recommended post
 
 **Top bar**:

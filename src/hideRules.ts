@@ -13,6 +13,8 @@ export type FeatureRules = {
   raiseSelectors?: string[];
   // Whole items (e.g. feed posts) hidden when they show one of the labels.
   hideItems?: ItemRule[];
+  // Everything after a marker (e.g. the posts after a heading) hidden, like hidden items.
+  hideAfter?: AfterRule[];
   // Bottom-bar slots that become the Church button: the icon is centred and gets a cross on its roof.
   churchSelectors?: string[];
   // Top-bar buttons moved to the bar's left end (16px from the edge to the icon) or its centre.
@@ -33,6 +35,15 @@ export type ItemRule = {
   // Remove the item completely instead of leaving an empty box. Only for things floating on top of
   // the page (like banners), since removing feed posts makes the feed jump.
   remove?: boolean;
+};
+
+export type AfterRule = {
+  // CSS selector for the marker, e.g. the box in the feed holding a heading.
+  marker: string;
+  // Exact text of a label inside the marker, in every language Instagram may use. Case doesn't matter.
+  labels: string[];
+  // Every later sibling of the marker that matches this selector is hidden.
+  item: string;
 };
 
 export type HideRules = {
@@ -93,6 +104,21 @@ export const DEFAULT_RULES: HideRules = {
           item: 'article',
           labels: ['Suggested for you', 'Forslag til deg'],
         },
+        {
+          // The "Suggested posts" heading after "You're all caught up". Both sit in one box among the
+          // feed's posts (feed > box > heading's box); only the heading's box goes.
+          item: 'div:has(> article) > div > div',
+          labels: ['Suggested posts', 'Foreslåtte innlegg'],
+        },
+      ],
+      hideAfter: [
+        {
+          // Every post after that box is a suggestion, labelled or not (collab posts have no Follow
+          // button either), so the feed ends at "You're all caught up".
+          marker: 'div:has(> article) > div',
+          labels: ['Suggested posts', 'Foreslåtte innlegg'],
+          item: 'article',
+        },
       ],
     },
     exploreGrid: {
@@ -141,6 +167,10 @@ export function focusSelectors(rules: HideRules): string[] {
 
 export function itemRules(rules: HideRules): ItemRule[] {
   return Object.values(rules.features).flatMap((f) => f.hideItems ?? []);
+}
+
+export function afterRules(rules: HideRules): AfterRule[] {
+  return Object.values(rules.features).flatMap((f) => f.hideAfter ?? []);
 }
 
 export function raiseSelectors(rules: HideRules): string[] {
@@ -204,8 +234,10 @@ ${icon}::after { content: ""; position: absolute; left: 0; top: -8px; width: 24p
 // item above it collapses, since Instagram's feed doesn't.
 export const HIDDEN_ITEM_ATTR = 'data-lightscroll-hidden';
 export const REMOVED_ITEM_ATTR = 'data-lightscroll-removed';
+// Items hidden by hideAfter get their own mark, so the label rules never show them again.
+export const AFTER_ITEM_ATTR = 'data-lightscroll-after';
 const HIDDEN_ITEM_CSS = `[${REMOVED_ITEM_ATTR}] { display: none !important; }
-[${HIDDEN_ITEM_ATTR}] { height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; }`;
+[${HIDDEN_ITEM_ATTR}], [${AFTER_ITEM_ATTR}] { height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; }`;
 
 // One CSS rule per selector, so a single broken selector can't disable the rest.
 // Only fixed declarations are ever used: hiding, layering on top, the Church button, moving top-bar

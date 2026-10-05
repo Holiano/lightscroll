@@ -5,6 +5,7 @@ let css = '';
 let blocked = [];
 let focus = [];
 let items = [];
+let after = [];
 let visitPath = null;
 let focusDone = false;
 
@@ -89,6 +90,35 @@ function hideItems() {
       // A broken selector skips only this rule.
     }
   }
+  hideAfter();
+}
+
+// Same as the app: hides everything after a marker, and shows again what's no longer after one.
+function hideAfter() {
+  if (!after.length) return;
+  const found = [];
+  for (const rule of after) {
+    try {
+      for (const marker of document.querySelectorAll(rule.marker)) {
+        if (!hasLabel(marker, rule.labels)) continue;
+        for (let el = marker.nextElementSibling; el; el = el.nextElementSibling) {
+          if (el.matches(rule.item)) found.push(el);
+        }
+      }
+    } catch {
+      // A broken selector skips only this rule.
+    }
+  }
+  for (const el of document.querySelectorAll('[data-lightscroll-after]')) {
+    if (!found.includes(el)) setHidden(el, 'data-lightscroll-after', false);
+  }
+  for (const el of found) {
+    if (!el.hasAttribute('data-lightscroll-after')) setHidden(el, 'data-lightscroll-after', true);
+    for (const video of el.getElementsByTagName('video')) {
+      video.muted = true;
+      if (!video.paused) video.pause();
+    }
+  }
 }
 
 function setBadge(text, ok) {
@@ -117,6 +147,10 @@ async function tick() {
       blocked = ruleValues(rules, 'blockedPaths');
       focus = ruleValues(rules, 'focusSelectors');
       items = ruleValues(rules, 'hideItems').map((r) => ({
+        ...r,
+        labels: (r.labels || []).map((l) => l.trim().toLowerCase()),
+      }));
+      after = ruleValues(rules, 'hideAfter').map((r) => ({
         ...r,
         labels: (r.labels || []).map((l) => l.trim().toLowerCase()),
       }));

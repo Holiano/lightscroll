@@ -1,6 +1,8 @@
 import {
+  AFTER_ITEM_ATTR,
   HIDDEN_ITEM_ATTR,
   REMOVED_ITEM_ATTR,
+  afterRules,
   blockedPaths,
   focusSelectors,
   itemRules,
@@ -17,6 +19,7 @@ export const MAX_ZOOM = 6;
 export function buildInjectedScript(rules: HideRules): string {
   const css = rulesCss(rules);
   const items = itemRules(rules).map((r) => ({ ...r, labels: r.labels.map((l) => l.trim().toLowerCase()) }));
+  const after = afterRules(rules).map((r) => ({ ...r, labels: r.labels.map((l) => l.trim().toLowerCase()) }));
 
   return `(function () {
   if (window.__lightscroll) return;
@@ -26,6 +29,8 @@ export function buildInjectedScript(rules: HideRules): string {
   var BLOCKED = ${JSON.stringify(blockedPaths(rules))};
   var FOCUS = ${JSON.stringify(focusSelectors(rules))};
   var ITEMS = ${JSON.stringify(items)};
+  var AFTER = ${JSON.stringify(after)};
+  var AFTER_ATTR = ${JSON.stringify(AFTER_ITEM_ATTR)};
   var HIDDEN = ${JSON.stringify(HIDDEN_ITEM_ATTR)};
   var REMOVED = ${JSON.stringify(REMOVED_ITEM_ATTR)};
   var MAX_ZOOM = ${MAX_ZOOM};
@@ -122,6 +127,35 @@ export function buildInjectedScript(rules: HideRules): string {
       } catch (e) {
         // A broken selector skips only this rule.
       }
+    }
+    hideAfter();
+  }
+
+  // Hides everything after a marker. Elements no longer after one (Instagram may reuse them) show again.
+  function hideAfter() {
+    if (!AFTER.length) return;
+    var after = [];
+    for (var i = 0; i < AFTER.length; i++) {
+      var rule = AFTER[i];
+      try {
+        var markers = document.querySelectorAll(rule.marker);
+        for (var j = 0; j < markers.length; j++) {
+          if (!hasLabel(markers[j], rule.labels)) continue;
+          for (var el = markers[j].nextElementSibling; el; el = el.nextElementSibling) {
+            if (el.matches(rule.item)) after.push(el);
+          }
+        }
+      } catch (e) {
+        // A broken selector skips only this rule.
+      }
+    }
+    var marked = document.querySelectorAll('[' + AFTER_ATTR + ']');
+    for (var k = 0; k < marked.length; k++) {
+      if (after.indexOf(marked[k]) === -1) setHidden(marked[k], AFTER_ATTR, false);
+    }
+    for (var m = 0; m < after.length; m++) {
+      if (!after[m].hasAttribute(AFTER_ATTR)) setHidden(after[m], AFTER_ATTR, true);
+      silenceVideos(after[m]);
     }
   }
 
@@ -229,7 +263,7 @@ export function buildInjectedScript(rules: HideRules): string {
 
   // Re-check items as soon as Instagram changes the page, before it is drawn, so a post that
   // scrolls back into view never flashes its content first.
-  if (ITEMS.length && window.MutationObserver) {
+  if ((ITEMS.length || AFTER.length) && window.MutationObserver) {
     new MutationObserver(hideItems).observe(document.documentElement, {
       childList: true,
       subtree: true,
