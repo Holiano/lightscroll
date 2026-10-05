@@ -71,6 +71,8 @@ export default function App() {
           keyboardDisplayRequiresUserAction={false}
           allowsInlineMediaPlayback
           allowsBackForwardNavigationGestures
+          // Scrolling glides on like in native apps, instead of the web view's quick stop.
+          decelerationRate="normal"
           pullToRefreshEnabled
           onShouldStartLoadWithRequest={handleNavigation}
           onOpenWindow={handleOpenWindow}

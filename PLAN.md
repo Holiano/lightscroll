@@ -59,6 +59,7 @@ donations later on. Faith is the reason it exists.
 - **Pinch to zoom**, which Instagram's website turns off. Two fingers zoom the page up to **6×** and move it
   around; it **snaps back** when you let go, like the Instagram app. Pinch only: double-tap still likes a post.
   If it doesn't feel smooth on the iPhone, v1 ships without it and a native version is considered for v1.1.
+- **Scrolling glides** like the Instagram app, instead of stopping quickly like web pages in apps do.
 - **No notifications, by design.** This is stated clearly in the App Store description.
 - iPhone only (no special iPad layout), all countries, age rating **13+**.
 
