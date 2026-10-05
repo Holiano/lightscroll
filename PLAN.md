@@ -34,7 +34,7 @@ donations later on. Faith is the reason it exists.
 | Area | Behaviour |
 |---|---|
 | Reels tab/button | **Hidden.** |
-| Suggested posts from strangers, reels and photos (home feed) | **Hidden** seamlessly, as if they were never there (videos paused and muted). This includes the whole "Suggested posts" section after "You're all caught up", so the feed ends there. The app holds the screen still when one above it disappears. See ADR 0003. |
+| Suggested posts from strangers, reels and photos (home feed) | **Hidden** seamlessly, as if they were never there (videos paused and muted). This includes the whole "Suggested posts" section after "You're all caught up", so the feed ends there, with a **"See older posts"** link to the Following feed, like the Instagram app. The app holds the screen still when one above it disappears. See ADR 0003. |
 | Endless swipe-to-next-reel | **Blocked everywhere.** A reel opens as one single video. |
 | Reels from people you follow | **Shown** as normal single posts. |
 | Reels sent in DMs | **Shown** on their own. The recommended reels Instagram lines up after them are hidden, so there's nothing to swipe to. |

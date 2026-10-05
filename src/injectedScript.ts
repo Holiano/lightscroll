@@ -1,11 +1,13 @@
 import {
   AFTER_ITEM_ATTR,
   HIDDEN_ITEM_ATTR,
+  LINK_ATTR,
   REMOVED_ITEM_ATTR,
   afterRules,
   blockedPaths,
   focusSelectors,
   itemRules,
+  linkRules,
   rulesCss,
   type HideRules,
 } from './hideRules';
@@ -20,6 +22,7 @@ export function buildInjectedScript(rules: HideRules): string {
   const css = rulesCss(rules);
   const items = itemRules(rules).map((r) => ({ ...r, labels: r.labels.map((l) => l.trim().toLowerCase()) }));
   const after = afterRules(rules).map((r) => ({ ...r, labels: r.labels.map((l) => l.trim().toLowerCase()) }));
+  const links = linkRules(rules).map((r) => ({ ...r, labels: r.labels.map((l) => l.trim().toLowerCase()) }));
 
   return `(function () {
   if (window.__lightscroll) return;
@@ -31,6 +34,8 @@ export function buildInjectedScript(rules: HideRules): string {
   var ITEMS = ${JSON.stringify(items)};
   var AFTER = ${JSON.stringify(after)};
   var AFTER_ATTR = ${JSON.stringify(AFTER_ITEM_ATTR)};
+  var LINKS = ${JSON.stringify(links)};
+  var LINK = ${JSON.stringify(LINK_ATTR)};
   var HIDDEN = ${JSON.stringify(HIDDEN_ITEM_ATTR)};
   var REMOVED = ${JSON.stringify(REMOVED_ITEM_ATTR)};
   var MAX_ZOOM = ${MAX_ZOOM};
@@ -129,6 +134,31 @@ export function buildInjectedScript(rules: HideRules): string {
       }
     }
     hideAfter();
+    addLinks();
+  }
+
+  // Adds each link once, at the end of its marker. Only paths on Instagram are allowed, so the rules
+  // can never send anyone to another site.
+  function addLinks() {
+    var lang = (document.documentElement.lang || '').toLowerCase().slice(0, 2);
+    for (var i = 0; i < LINKS.length; i++) {
+      var rule = LINKS[i];
+      if (rule.path.charAt(0) !== '/' || rule.path.charAt(1) === '/') continue;
+      try {
+        var markers = document.querySelectorAll(rule.marker);
+        for (var j = 0; j < markers.length; j++) {
+          var marker = markers[j];
+          if (marker.querySelector('[' + LINK + ']') || !hasLabel(marker, rule.labels)) continue;
+          var link = document.createElement('a');
+          link.setAttribute(LINK, '');
+          link.href = rule.path;
+          link.textContent = rule.text[lang] || rule.text.en || '';
+          marker.appendChild(link);
+        }
+      } catch (e) {
+        // A broken selector skips only this rule.
+      }
+    }
   }
 
   // Hides everything after a marker. Elements no longer after one (Instagram may reuse them) show again.
@@ -263,7 +293,7 @@ export function buildInjectedScript(rules: HideRules): string {
 
   // Re-check items as soon as Instagram changes the page, before it is drawn, so a post that
   // scrolls back into view never flashes its content first.
-  if ((ITEMS.length || AFTER.length) && window.MutationObserver) {
+  if ((ITEMS.length || AFTER.length || LINKS.length) && window.MutationObserver) {
     new MutationObserver(hideItems).observe(document.documentElement, {
       childList: true,
       subtree: true,

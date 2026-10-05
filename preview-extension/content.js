@@ -6,6 +6,7 @@ let blocked = [];
 let focus = [];
 let items = [];
 let after = [];
+let links = [];
 let visitPath = null;
 let focusDone = false;
 
@@ -91,6 +92,27 @@ function hideItems() {
     }
   }
   hideAfter();
+  addLinks();
+}
+
+// Same as the app: adds each link once at the end of its marker, and only to paths on Instagram.
+function addLinks() {
+  const lang = (document.documentElement.lang || '').toLowerCase().slice(0, 2);
+  for (const rule of links) {
+    if (rule.path.charAt(0) !== '/' || rule.path.charAt(1) === '/') continue;
+    try {
+      for (const marker of document.querySelectorAll(rule.marker)) {
+        if (marker.querySelector('[data-lightscroll-link]') || !hasLabel(marker, rule.labels)) continue;
+        const link = document.createElement('a');
+        link.setAttribute('data-lightscroll-link', '');
+        link.href = rule.path;
+        link.textContent = rule.text[lang] || rule.text.en || '';
+        marker.appendChild(link);
+      }
+    } catch {
+      // A broken selector skips only this rule.
+    }
+  }
 }
 
 // Same as the app: hides everything after a marker, and shows again what's no longer after one.
@@ -147,6 +169,10 @@ async function tick() {
       blocked = ruleValues(rules, 'blockedPaths');
       focus = ruleValues(rules, 'focusSelectors');
       items = ruleValues(rules, 'hideItems').map((r) => ({
+        ...r,
+        labels: (r.labels || []).map((l) => l.trim().toLowerCase()),
+      }));
+      links = ruleValues(rules, 'addLinks').map((r) => ({
         ...r,
         labels: (r.labels || []).map((l) => l.trim().toLowerCase()),
       }));

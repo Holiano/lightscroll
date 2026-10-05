@@ -15,6 +15,8 @@ export type FeatureRules = {
   hideItems?: ItemRule[];
   // Everything after a marker (e.g. the posts after a heading) hidden, like hidden items.
   hideAfter?: AfterRule[];
+  // Links to other Instagram pages added at the end of a marker.
+  addLinks?: LinkRule[];
   // Bottom-bar slots that become the Church button: the icon is centred and gets a cross on its roof.
   churchSelectors?: string[];
   // Top-bar buttons moved to the bar's left end (16px from the edge to the icon) or its centre.
@@ -44,6 +46,17 @@ export type AfterRule = {
   labels: string[];
   // Every later sibling of the marker that matches this selector is hidden.
   item: string;
+};
+
+export type LinkRule = {
+  // CSS selector for the marker; the link goes at its end.
+  marker: string;
+  // Exact text of a label inside the marker, in every language Instagram may use. Case doesn't matter.
+  labels: string[];
+  // Where the link goes: a path on instagram.com. Anything else is ignored.
+  path: string;
+  // The link's words by the page's language code, with English ("en") as the fallback.
+  text: Record<string, string>;
 };
 
 export type HideRules = {
@@ -120,6 +133,16 @@ export const DEFAULT_RULES: HideRules = {
           item: 'article',
         },
       ],
+      addLinks: [
+        {
+          // Like the Instagram app's "View older posts": under "You're all caught up", a link to the
+          // Following feed, which goes on past the last 3 days.
+          marker: 'div:has(> article) > div',
+          labels: ["You're all caught up", 'You’re all caught up', 'Du er helt oppdatert'],
+          path: '/?variant=following',
+          text: { en: 'See older posts', nb: 'Se eldre innlegg', no: 'Se eldre innlegg', nn: 'Sjå eldre innlegg' },
+        },
+      ],
     },
     exploreGrid: {
       hideSelectors: [
@@ -171,6 +194,10 @@ export function itemRules(rules: HideRules): ItemRule[] {
 
 export function afterRules(rules: HideRules): AfterRule[] {
   return Object.values(rules.features).flatMap((f) => f.hideAfter ?? []);
+}
+
+export function linkRules(rules: HideRules): LinkRule[] {
+  return Object.values(rules.features).flatMap((f) => f.addLinks ?? []);
 }
 
 export function raiseSelectors(rules: HideRules): string[] {
@@ -239,9 +266,13 @@ export const AFTER_ITEM_ATTR = 'data-lightscroll-after';
 const HIDDEN_ITEM_CSS = `[${REMOVED_ITEM_ATTR}] { display: none !important; }
 [${HIDDEN_ITEM_ATTR}], [${AFTER_ITEM_ATTR}] { height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; }`;
 
+// Added links look like Instagram's blue text links, centred under the marker.
+export const LINK_ATTR = 'data-lightscroll-link';
+const LINK_CSS = `[${LINK_ATTR}] { display: block !important; padding: 12px 0 20px !important; text-align: center !important; font-size: 14px !important; font-weight: 600 !important; color: rgb(0, 149, 246) !important; text-decoration: none !important; }`;
+
 // One CSS rule per selector, so a single broken selector can't disable the rest.
 // Only fixed declarations are ever used: hiding, layering on top, the Church button, moving top-bar
-// buttons and the logo's arrow, and hidden items.
+// buttons and the logo's arrow, hidden items, and added links.
 export function rulesCss(rules: HideRules): string {
   return [
     ...hideSelectors(rules).map((s) => `${s} { display: none !important; }`),
@@ -251,6 +282,7 @@ export function rulesCss(rules: HideRules): string {
     ...placeCenterSelectors(rules).map(placeCenterCss),
     ...logoArrowSelectors(rules).map(logoArrowCss),
     HIDDEN_ITEM_CSS,
+    LINK_CSS,
   ].join('\n');
 }
 
