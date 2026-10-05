@@ -39,6 +39,7 @@ donations later on. Faith is the reason it exists.
 | Reels from people you follow | **Shown** as normal single posts. |
 | Reels sent in DMs | **Shown** on their own. The recommended reels Instagram lines up after them are hidden, so there's nothing to swipe to. |
 | Explore | **Search only.** The recommended grid is hidden, and Explore opens straight into search (recent searches). |
+| Feed | The app opens in Instagram's **normal feed**, not "Following": Following has no stories row. Following is still in the logo's menu. |
 | Bottom bar | **Four icons**, evenly spaced: the Reels slot is removed. The Home button gets a small cross on its roof, making it the **Church button**. It still works as Home. |
 | Top bar | Laid out **like the Instagram app**: the + button on the left, the logo in the middle, the heart on the right. |
 | "Open in the Instagram app" banners | **Hidden.** |
@@ -57,7 +58,8 @@ donations later on. Faith is the reason it exists.
 - Posting works the way Instagram's website allows. The app asks for photo and camera access only when needed.
 - Links that leave Instagram (for example "link in bio") open in **Safari**.
 - **Pinch to zoom**, which Instagram's website turns off. Two fingers zoom the page up to **6×** and move it
-  around; it **snaps back** when you let go, like the Instagram app. Pinch only: double-tap still likes a post.
+  around. Lifting one finger keeps the zoom and the other finger moves the page; it **snaps back** when the last
+  finger lifts, like the Instagram app. Pinch only: double-tap still likes a post.
   If it doesn't feel smooth on the iPhone, v1 ships without it and a native version is considered for v1.1.
 - **Scrolling glides** like the Instagram app, instead of stopping quickly like web pages in apps do.
 - **No notifications, by design.** This is stated clearly in the App Store description.
@@ -124,7 +126,7 @@ Bigger fixes to the app's own logic go out via Expo updates or a new App Store r
 - [x] Hide "Open in app" banners.
 - [x] Church button: a cross on the Home button, Reels slot removed, four icons evenly spaced.
 - [x] Top bar laid out like the app.
-- [ ] Pinch to zoom that snaps back.
+- [x] Pinch to zoom that snaps back.
 - [ ] Check all of the above on the iPhone (built and tested in Chrome's phone view so far).
 
 ### 3. Release

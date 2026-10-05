@@ -125,9 +125,11 @@ export function buildInjectedScript(rules: HideRules): string {
     }
   }
 
-  // Pinch to zoom: two fingers zoom the page (up to MAX_ZOOM) and move it around, and it slides
-  // back to normal as soon as a finger lifts. Safari's own zoom stays off, so double-tap still likes.
-  var pinch = null;
+  // Pinch to zoom: two fingers zoom the page (up to MAX_ZOOM) and move it around. Lifting one finger
+  // keeps the zoom and the other finger moves the page; a new second finger zooms on from there.
+  // When the last finger lifts, the page slides back to normal. Safari's own zoom stays off, so
+  // double-tap still likes a post.
+  var zoom = null;
   function distance(a, b) {
     var dx = a.clientX - b.clientX;
     var dy = a.clientY - b.clientY;
@@ -136,37 +138,64 @@ export function buildInjectedScript(rules: HideRules): string {
   function midpoint(a, b) {
     return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
   }
+  // Follow the fingers now down, starting from the current zoom, so changing fingers never jumps.
+  function follow(touches) {
+    zoom.base = { scale: zoom.scale, x: zoom.x, y: zoom.y };
+    zoom.pinching = touches.length >= 2;
+    if (zoom.pinching) {
+      zoom.start = distance(touches[0], touches[1]);
+      zoom.from = midpoint(touches[0], touches[1]);
+    } else {
+      zoom.from = { x: touches[0].clientX, y: touches[0].clientY };
+    }
+  }
   // Zoom the page's content; the top and bottom bars stay where they are.
-  function startPinch(event) {
+  function startZoom(event) {
     if (event.touches.length !== 2) return;
-    var el = document.querySelector('main') || document.body;
-    if (!el) return;
-    el.style.transition = 'none';
-    el.style.transform = '';
-    var a = event.touches[0];
-    var b = event.touches[1];
-    pinch = { el: el, rect: el.getBoundingClientRect(), start: distance(a, b), from: midpoint(a, b) };
+    if (!zoom) {
+      var el = document.querySelector('main') || document.body;
+      if (!el) return;
+      el.style.transition = 'none';
+      el.style.transform = '';
+      zoom = { el: el, rect: el.getBoundingClientRect(), scale: 1, x: 0, y: 0 };
+    }
+    follow(event.touches);
     event.stopPropagation();
   }
-  // Keep the spot first pinched under the fingers, so moving them moves the zoomed page.
-  function movePinch(event) {
-    if (!pinch || event.touches.length !== 2) return;
+  function moveZoom(event) {
+    if (!zoom) return;
     event.preventDefault();
     event.stopPropagation();
-    var a = event.touches[0];
-    var b = event.touches[1];
-    var scale = Math.min(MAX_ZOOM, Math.max(1, distance(a, b) / pinch.start));
-    var to = midpoint(a, b);
-    var r = pinch.rect;
-    var x = to.x - r.left - scale * (pinch.from.x - r.left);
-    var y = to.y - r.top - scale * (pinch.from.y - r.top);
-    pinch.el.style.transformOrigin = '0 0';
-    pinch.el.style.transform = 'translate(' + x + 'px, ' + y + 'px) scale(' + scale + ')';
+    var t = event.touches;
+    var b = zoom.base;
+    if (zoom.pinching && t.length >= 2) {
+      // The spot first pinched stays under the fingers.
+      var to = midpoint(t[0], t[1]);
+      var scale = Math.min(MAX_ZOOM, Math.max(1, (b.scale * distance(t[0], t[1])) / zoom.start));
+      var px = (zoom.from.x - zoom.rect.left - b.x) / b.scale;
+      var py = (zoom.from.y - zoom.rect.top - b.y) / b.scale;
+      zoom.scale = scale;
+      zoom.x = to.x - zoom.rect.left - scale * px;
+      zoom.y = to.y - zoom.rect.top - scale * py;
+    } else if (!zoom.pinching && t.length === 1) {
+      zoom.x = b.x + t[0].clientX - zoom.from.x;
+      zoom.y = b.y + t[0].clientY - zoom.from.y;
+    } else {
+      return;
+    }
+    zoom.el.style.transformOrigin = '0 0';
+    zoom.el.style.transform = 'translate(' + zoom.x + 'px, ' + zoom.y + 'px) scale(' + zoom.scale + ')';
   }
-  function endPinch(event) {
-    if (!pinch || event.touches.length >= 2) return;
-    var el = pinch.el;
-    pinch = null;
+  function endZoom(event) {
+    if (!zoom) return;
+    if (event.touches.length) {
+      follow(event.touches);
+      return;
+    }
+    // The last finger is up: this touch must not also count as a tap or a like.
+    if (event.cancelable) event.preventDefault();
+    var el = zoom.el;
+    zoom = null;
     // Only the slide back itself, not animations inside the page.
     function clear(e) {
       if (e && e.target !== el) return;
@@ -179,10 +208,10 @@ export function buildInjectedScript(rules: HideRules): string {
     el.style.transition = 'transform 0.25s ease-out';
     el.style.transform = '';
   }
-  window.addEventListener('touchstart', startPinch, { capture: true, passive: true });
-  window.addEventListener('touchmove', movePinch, { capture: true, passive: false });
-  window.addEventListener('touchend', endPinch, true);
-  window.addEventListener('touchcancel', endPinch, true);
+  window.addEventListener('touchstart', startZoom, { capture: true, passive: true });
+  window.addEventListener('touchmove', moveZoom, { capture: true, passive: false });
+  window.addEventListener('touchend', endZoom, { capture: true, passive: false });
+  window.addEventListener('touchcancel', endZoom, { capture: true, passive: false });
   // Safari's own pinch zoom, in case Instagram's page ever allows it.
   document.addEventListener('gesturestart', function (event) {
     event.preventDefault();

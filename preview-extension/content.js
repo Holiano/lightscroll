@@ -132,22 +132,36 @@ async function tick() {
   hideItems();
 }
 
-// Same as the app: two fingers zoom the page's content (up to 6×, MAX_ZOOM in the app) and move it
-// around, and it slides back as soon as a finger lifts.
-let pinch = null;
+// Same as the app: two fingers zoom the page's content (up to 6x, MAX_ZOOM in the app) and move it
+// around. Lifting one finger keeps the zoom and the other finger moves the page; a new second finger
+// zooms on from there. When the last finger lifts, the page slides back.
+let zoom = null;
 const distance = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 const midpoint = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+
+function follow(touches) {
+  zoom.base = { scale: zoom.scale, x: zoom.x, y: zoom.y };
+  zoom.pinching = touches.length >= 2;
+  if (zoom.pinching) {
+    zoom.start = distance(touches[0], touches[1]);
+    zoom.from = midpoint(touches[0], touches[1]);
+  } else {
+    zoom.from = { x: touches[0].clientX, y: touches[0].clientY };
+  }
+}
 
 window.addEventListener(
   'touchstart',
   (event) => {
     if (event.touches.length !== 2) return;
-    const el = document.querySelector('main') || document.body;
-    if (!el) return;
-    el.style.transition = 'none';
-    el.style.transform = '';
-    const [a, b] = event.touches;
-    pinch = { el, rect: el.getBoundingClientRect(), start: distance(a, b), from: midpoint(a, b) };
+    if (!zoom) {
+      const el = document.querySelector('main') || document.body;
+      if (!el) return;
+      el.style.transition = 'none';
+      el.style.transform = '';
+      zoom = { el, rect: el.getBoundingClientRect(), scale: 1, x: 0, y: 0 };
+    }
+    follow(event.touches);
     event.stopPropagation();
   },
   { capture: true, passive: true },
@@ -156,25 +170,40 @@ window.addEventListener(
 window.addEventListener(
   'touchmove',
   (event) => {
-    if (!pinch || event.touches.length !== 2) return;
+    if (!zoom) return;
     event.preventDefault();
     event.stopPropagation();
-    const [a, b] = event.touches;
-    const scale = Math.min(6, Math.max(1, distance(a, b) / pinch.start));
-    const to = midpoint(a, b);
-    const r = pinch.rect;
-    const x = to.x - r.left - scale * (pinch.from.x - r.left);
-    const y = to.y - r.top - scale * (pinch.from.y - r.top);
-    pinch.el.style.transformOrigin = '0 0';
-    pinch.el.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    const t = event.touches;
+    const b = zoom.base;
+    if (zoom.pinching && t.length >= 2) {
+      const to = midpoint(t[0], t[1]);
+      const scale = Math.min(6, Math.max(1, (b.scale * distance(t[0], t[1])) / zoom.start));
+      const px = (zoom.from.x - zoom.rect.left - b.x) / b.scale;
+      const py = (zoom.from.y - zoom.rect.top - b.y) / b.scale;
+      zoom.scale = scale;
+      zoom.x = to.x - zoom.rect.left - scale * px;
+      zoom.y = to.y - zoom.rect.top - scale * py;
+    } else if (!zoom.pinching && t.length === 1) {
+      zoom.x = b.x + t[0].clientX - zoom.from.x;
+      zoom.y = b.y + t[0].clientY - zoom.from.y;
+    } else {
+      return;
+    }
+    zoom.el.style.transformOrigin = '0 0';
+    zoom.el.style.transform = `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})`;
   },
   { capture: true, passive: false },
 );
 
-function endPinch(event) {
-  if (!pinch || event.touches.length >= 2) return;
-  const { el } = pinch;
-  pinch = null;
+function endZoom(event) {
+  if (!zoom) return;
+  if (event.touches.length) {
+    follow(event.touches);
+    return;
+  }
+  if (event.cancelable) event.preventDefault();
+  const { el } = zoom;
+  zoom = null;
   const clear = (e) => {
     if (e && e.target !== el) return;
     el.removeEventListener('transitionend', clear);
@@ -186,8 +215,8 @@ function endPinch(event) {
   el.style.transition = 'transform 0.25s ease-out';
   el.style.transform = '';
 }
-window.addEventListener('touchend', endPinch, true);
-window.addEventListener('touchcancel', endPinch, true);
+window.addEventListener('touchend', endZoom, { capture: true, passive: false });
+window.addEventListener('touchcancel', endZoom, { capture: true, passive: false });
 
 // Same as the app: re-check items as soon as Instagram changes the page, before it is drawn,
 // so a post that scrolls back into view never flashes its content first.
